@@ -1,6 +1,62 @@
+# MANAK CodeRabbit Configuration
+# Applies to: Backend (Dev 1,2,4), Frontend (Dev 5), AI/Search (Dev 3)
+
 language: "en-US"
+
 reviews:
-  profile: "chill" # Options: "chill" (bugs/security) or "assertive" (detailed)
+  profile: "chill"  # Lightweight: focus on bugs/security, skip style nitpicks
+  
+  request_changes: true
   auto_review:
     enabled: true
     drafts: false
+    
+  collapse_walker_findings: true
+
+# Dev role-specific review settings
+reviewers:
+  - type: python
+    auto_review: true
+    auto_approve_small: false
+  - type: javascript
+    auto_review: true
+    auto_approve_small: false
+
+# Paths to review (all key source files)
+rules:
+  - rules:
+      - type: "path"
+        patterns:
+          - "backend/**/*.py"
+          - "frontend/**/*.{js,jsx,ts,tsx}"
+          - "ai_search/**/*.py"
+          - "tests/**/*.py"
+        instructions: "Review for bugs, security issues, and test coverage"
+      
+      - type: "path"
+        patterns:
+          - "requirements.txt"
+          - "package.json"
+          - ".github/workflows/*.yml"
+        instructions: "Validate dependencies and CI/CD configs"
+      
+      - type: "path"
+        patterns:
+          - "docs/**"
+          - "README.md"
+        instructions: "Check for accuracy and clarity"
+
+# Ignore patterns (don't review)
+ignore:
+  - "*.lock"
+  - "node_modules/"
+  - "__pycache__/"
+  - "dist/"
+  - "build/"
+  - ".env*"
+  - "qdrant_storage/"
+  - ".vscode/"
+
+# Review comment guidelines
+chat_with_bot: true
+comment_type: "draft"  # Draft comments for discussion before merging
