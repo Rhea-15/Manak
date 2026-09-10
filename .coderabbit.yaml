@@ -1,0 +1,6 @@
+language: "en-US"
+reviews:
+  profile: "chill" # Options: "chill" (bugs/security) or "assertive" (detailed)
+  auto_review:
+    enabled: true
+    drafts: false
