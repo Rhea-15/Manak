@@ -1,11 +1,6 @@
-# Environment & Secrets
-.env
-.env.local
-.env.*.local
-.vscode/
-.idea/
-
-# Python
+# =========================
+# Python (Dev 1, 2, 3, 4 backend/AI work)
+# =========================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -26,35 +21,140 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env.bak/
+env.bak/
+
+# Pytest / coverage / lint caches
 .pytest_cache/
+.cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.ruff_cache/
+.mypy_cache/
+nosetests.xml
+coverage.xml
+*.cover
 
-# Node/Frontend
+# Jupyter (if used for prototyping embeddings/NLP)
+.ipynb_checkpoints/
+
+
+# =========================
+# Node / Next.js (Dev 5 frontend)
+# =========================
 node_modules/
-frontend/dist/
-frontend/.env.local
-*.log
+.next/
+out/
+build/
+dist/
+.turbo/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
 
-# Database & Storage
-*.db
-*.sqlite
+# Package manager logs/locks (keep ONE lockfile per team convention)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+
+# =========================
+# Environment & secrets (CRITICAL — never commit these)
+# =========================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.yaml
+credentials.json
+
+
+# =========================
+# Databases / Vector Store / Graph DB local data
+# (Dev 2 — Postgres, Neo4j, MinIO/S3 local volumes)
+# =========================
 *.sqlite3
+*.db
+pgdata/
+postgres-data/
+neo4j-data/
+neo4j/data/
+neo4j/logs/
 qdrant_storage/
-qdrant_test_db/
+minio-data/
+*.dump
+*.sql.gz
 
-# IDE
+
+# =========================
+# ML / Embedding model artifacts (Dev 3 — AI & Search)
+# =========================
+*.bin
+*.pt
+*.onnx
+*.safetensors
+models/
+checkpoints/
+.cache/huggingface/
+*.faiss
+
+
+# =========================
+# Logs & runtime artifacts
+# =========================
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+
+# =========================
+# OS-specific junk
+# =========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+
+# =========================
+# Editor / IDE
+# =========================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.history/
 
-# OS
-.DS_Store
-Thumbs.db
 
-# Temp
-tmp/
-temp/
+# =========================
+# Docker (if used for Neo4j/Postgres containers per task doc)
+# =========================
+docker-compose.override.yml
+.docker/
+
+
+# =========================
+# Misc build/test junk
+# =========================
 *.tmp
+*.bak
+*.orig
