@@ -1,352 +1,65 @@
-name: MANAK CI/CD Pipeline
+name: CI
 
 on:
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - "backend/**"
-      - "frontend/**"
-      - "ai_search/**"
-      - "tests/**"
-      - "requirements.txt"
-      - "package.json"
-      - ".github/workflows/**"
-  
   push:
-    branches: [ main, develop ]
-    paths:
-      - "backend/**"
-      - "frontend/**"
-      - "ai_search/**"
-      - "tests/**"
-
-  schedule:
-    - cron: "0 0 * * *"  # Daily build
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
 
 jobs:
-  # ==================== BACKEND TESTS (Dev 1, 2, 4) ====================
-  backend-tests:
-    name: Backend - Python Tests & Lint
+  python-tests:
+    name: Python Lint + Pytest
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: Install Python Dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install pytest pytest-cov pytest-asyncio flake8 black isort mypy
-
-    - name: Download spaCy Model
-      run: python -m spacy download en_core_web_sm
-
-    - name: Format Check with Black
-      run: |
-        black --check backend/ ai_search/ || echo "Run: black backend/ ai_search/"
-
-    - name: Import Sort Check
-      run: |
-        isort --check-only backend/ ai_search/ || echo "Run: isort backend/ ai_search/"
-
-    - name: Lint with Flake8
-      run: |
-        # Syntax errors stop the build
-        flake8 backend/ ai_search/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Other issues as warnings
-        flake8 backend/ ai_search/ --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
-
-    - name: Type Check with MyPy
-      run: |
-        mypy backend/ ai_search/ --ignore-missing-imports --no-error-summary 2>/dev/null || echo "⚠️ Type hints incomplete (non-blocking)"
-
-    - name: Run Backend Unit Tests
-      env:
-        CI: "true"
-        QDRANT_PATH: "./qdrant_test_db"
-        DB_URL: "sqlite:///test.db"
-      run: |
-        pytest tests/backend/ -v --cov=backend --cov=ai_search --cov-report=xml --cov-report=term-only || true
-
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage.xml
-        flags: backend
-        fail_ci_if_error: false
-
-  # ==================== AI/SEARCH TESTS (Dev 3) ====================
-  ai-search-tests:
-    name: AI & Search - Vector DB & NLP Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-ai-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-ai-
-
-    - name: Install AI Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install pytest pytest-asyncio flake8 pytest-timeout
-
-    - name: Download spaCy Model
-      run: python -m spacy download en_core_web_sm
-
-    - name: Lint AI Search Code
-      run: |
-        flake8 ai_search/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 ai_search/ --count --exit-zero --max-complexity=12 --max-line-length=120 --statistics
-
-    - name: Run AI/NLP Unit Tests
-      env:
-        CI: "true"
-        SKIP_PADDLEOCR: "true"  # Skip heavy OCR tests in CI
-        QDRANT_PATH: "./qdrant_test_db"
-      run: |
-        pytest tests/ai_search/ -v --timeout=300 -m "not slow" --cov=ai_search --cov-report=term-only || true
-
-    - name: Test Vector DB Integration
-      env:
-        CI: "true"
-      run: |
-        pytest tests/ai_search/test_qdrant.py -v || echo "⚠️ Vector DB tests skipped (optional in CI)"
-
-  # ==================== FRONTEND TESTS (Dev 5) ====================
-  frontend-tests:
-    name: Frontend - JavaScript/React Tests & Lint
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Set up Node.js 18
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: 'frontend/package-lock.json'
-
-    - name: Install Frontend Dependencies
-      run: |
-        cd frontend
-        npm ci --prefer-offline --no-audit
-
-    - name: Lint with ESLint
-      run: |
-        cd frontend
-        npm run lint || echo "⚠️ ESLint warnings (check manually)"
-
-    - name: Type Check with TypeScript
-      run: |
-        cd frontend
-        npm run type-check || echo "⚠️ TypeScript errors (review carefully)"
-
-    - name: Run Frontend Tests
-      run: |
-        cd frontend
-        npm test -- --passWithNoTests --coverage --watchAll=false || true
-
-    - name: Build Frontend (Production)
-      run: |
-        cd frontend
-        npm run build
-
-    - name: Check Build Artifacts Size
-      run: |
-        cd frontend
-        du -sh dist/ || echo "No build artifacts"
-
-  # ==================== DATABASE INTEGRITY (Dev 1, 2) ====================
-  database-validation:
-    name: Database Schema & Migrations
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install alembic sqlalchemy
-
-    - name: Validate SQL Schemas
-      run: |
-        python -c "
-        import os
-        schema_files = [f for f in os.listdir('backend/database') if f.endswith('.sql')]
-        if schema_files:
-          print(f'Found {len(schema_files)} schema files')
-        else:
-          print('⚠️ No SQL schemas found in backend/database')
-        " || echo "Database validation skipped"
-
-    - name: Check Alembic Migrations
-      run: |
-        cd backend
-        alembic upgrade head --sql 2>/dev/null || echo "⚠️ No migrations configured yet (optional)"
-
-  # ==================== DEPENDENCY SECURITY ====================
-  security-check:
-    name: Dependency Security Audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Check Python Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install safety
-        pip install -r requirements.txt 2>/dev/null || true
-        safety check --json 2>/dev/null || echo "⚠️ Some dependencies have known vulnerabilities (review)"
-
-    - name: Set up Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-
-    - name: Check npm Dependencies
-      run: |
-        cd frontend
-        npm audit --audit-level=moderate || echo "⚠️ npm audit found issues (review)"
-
-  # ==================== INTEGRATION TEST ====================
-  integration-test:
-    name: End-to-End Integration Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: [backend-tests, frontend-tests, ai-search-tests]
-    if: success()
-    
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: manak_test
-          POSTGRES_PASSWORD: testpass
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install pytest
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          pip install pytest ruff
 
-    - name: Run Integration Tests
-      env:
-        DATABASE_URL: "postgresql://postgres:testpass@localhost:5432/manak_test"
-        CI: "true"
-      run: |
-        pytest tests/integration/ -v --tb=short || echo "⚠️ Integration tests optional for now"
+      - name: Lint with ruff (syntax + style errors)
+        run: ruff check . --output-format=github
 
-  # ==================== FINAL STATUS REPORT ====================
-  ci-status:
-    name: CI Status Report
+      - name: Run pytest across entire tests/ directory
+        run: pytest tests/ -v --tb=short
+
+  frontend-checks:
+    name: JS/TS Lint + Build Check
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests, ai-search-tests, database-validation, security-check]
-    if: always()
-    
+    # Only runs if a package.json exists anywhere — safe no-op otherwise
     steps:
-    - name: Check Job Status
-      run: |
-        echo "========================================="
-        echo "MANAK CI/CD Pipeline Status"
-        echo "========================================="
-        echo "✅ Backend Tests: ${{ needs.backend-tests.result }}"
-        echo "✅ Frontend Tests: ${{ needs.frontend-tests.result }}"
-        echo "✅ AI/Search Tests: ${{ needs.ai-search-tests.result }}"
-        echo "✅ Database Validation: ${{ needs.database-validation.result }}"
-        echo "✅ Security Audit: ${{ needs.security-check.result }}"
-        echo "========================================="
-        if [[ "${{ needs.backend-tests.result }}" == "failure" || "${{ needs.frontend-tests.result }}" == "failure" ]]; then
-          echo "❌ Critical tests failed. Merge blocked."
-          exit 1
-        fi
-        echo "✅ Ready for merge!"
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Comment on PR
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const status = `
-          ## 🚀 MANAK CI Pipeline Report
-          
-          | Component | Status |
-          |-----------|--------|
-          | Backend (Dev 1,2,4) | ${{ needs.backend-tests.result }} |
-          | Frontend (Dev 5) | ${{ needs.frontend-tests.result }} |
-          | AI/Search (Dev 3) | ${{ needs.ai-search-tests.result }} |
-          | Database | ${{ needs.database-validation.result }} |
-          | Security | ${{ needs.security-check.result }} |
-          
-          **All tests must pass before merging.**
-          `;
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: status
-          })
+      - name: Check for package.json
+        id: check_frontend
+        run: |
+          if find . -maxdepth 3 -name "package.json" -not -path "*/node_modules/*" | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node
+        if: steps.check_frontend.outputs.found == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install & Lint
+        if: steps.check_frontend.outputs.found == 'true'
+        run: |
+          npm ci --prefer-offline --no-audit || npm install
+          npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 || true

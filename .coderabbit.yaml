@@ -1,62 +1,56 @@
-# MANAK CodeRabbit Configuration
-# Applies to: Backend (Dev 1,2,4), Frontend (Dev 5), AI/Search (Dev 3)
-
 language: "en-US"
 
 reviews:
-  profile: "chill"  # Lightweight: focus on bugs/security, skip style nitpicks
-  
-  request_changes: true
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
   auto_review:
     enabled: true
     drafts: false
-    
-  collapse_walker_findings: true
+    base_branches:
+      - ".*"
 
-# Dev role-specific review settings
-reviewers:
-  - type: python
-    auto_review: true
-    auto_approve_small: false
-  - type: javascript
-    auto_review: true
-    auto_approve_small: false
+  path_filters:
+    - "**/*.py"
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.js"
+    - "**/*.jsx"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/*.min.js"
 
-# Paths to review (all key source files)
-rules:
-  - rules:
-      - type: "path"
-        patterns:
-          - "backend/**/*.py"
-          - "frontend/**/*.{js,jsx,ts,tsx}"
-          - "ai_search/**/*.py"
-          - "tests/**/*.py"
-        instructions: "Review for bugs, security issues, and test coverage"
-      
-      - type: "path"
-        patterns:
-          - "requirements.txt"
-          - "package.json"
-          - ".github/workflows/*.yml"
-        instructions: "Validate dependencies and CI/CD configs"
-      
-      - type: "path"
-        patterns:
-          - "docs/**"
-          - "README.md"
-        instructions: "Check for accuracy and clarity"
+  path_instructions:
+    - path: "**/*.py"
+      instructions: >
+        Focus on security vulnerabilities (injection, unsafe deserialization,
+        hardcoded secrets, unsafe eval/exec), logic bugs, unhandled exceptions,
+        and violations of type hints. Flag any missing input validation on
+        API endpoints.
+    - path: "**/*.{ts,tsx,js,jsx}"
+      instructions: >
+        Focus on security vulnerabilities (XSS, unsafe innerHTML, exposed
+        secrets/API keys, insecure API calls), logic bugs, unhandled promise
+        rejections, and React anti-patterns (missing dependency arrays,
+        unsafe state mutations).
 
-# Ignore patterns (don't review)
-ignore:
-  - "*.lock"
-  - "node_modules/"
-  - "__pycache__/"
-  - "dist/"
-  - "build/"
-  - ".env*"
-  - "qdrant_storage/"
-  - ".vscode/"
+  tools:
+    ruff:
+      enabled: true
+    eslint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    semgrep:
+      enabled: true
 
-# Review comment guidelines
-chat_with_bot: true
-comment_type: "draft"  # Draft comments for discussion before merging
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: "auto"
