@@ -211,7 +211,7 @@ class ScannedPDFExtractor:
             self.logger.info(f"OCR extracted {len(pages)} pages from {pdf_path}")
             
         except Exception as e:
-            self.logger.error(f"Error extracting scanned PDF: {e}")
+            self.logger.error("Error extracting scanned PDF: %s", e)
             raise
         
         return pages
@@ -375,7 +375,7 @@ class DocumentParser:
                     self.logger.warning("Digital PDF extraction returned no meaningful text, attempting OCR")
                     pages = self.scanned_extractor.extract(file_path)
                     doc_type = DocumentType.PDF_SCANNED
-            except Exception as e:
+            except Exception as e:  
                 self.logger.warning(f"Digital extraction failed, trying OCR: {e}")
                 pages = self.scanned_extractor.extract(file_path)
                 doc_type = DocumentType.PDF_SCANNED

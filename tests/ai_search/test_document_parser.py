@@ -87,7 +87,7 @@ class TestSpacyNERProcessor:
 
     @pytest.mark.skipif(
         not pytest.importorskip("spacy", minversion=None),
-        reason="spaCy not installed"
+        reason="spaCy not installed",
     )
     def test_technical_entity_extraction(self):
         """Test extraction of technical entities (IS codes, dimensions)"""

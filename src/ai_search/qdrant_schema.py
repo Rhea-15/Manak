@@ -78,8 +78,8 @@ class QdrantSchemaManager:
             )
             return True
 
-        except Exception as e:
-            self.logger.error(f"Error creating collection: {e}")
+        except Exception as exc:  
+            self.logger.error("Error creating collection: %s", exc)
             raise
 
     def create_boq_items_collection(self) -> bool:
@@ -103,8 +103,8 @@ class QdrantSchemaManager:
             self.logger.info(f"Created BOQ items collection: {collection_name}")
             return True
 
-        except Exception as e:
-            self.logger.error(f"Error creating BOQ collection: {e}")
+        except Exception as exc:  
+            self.logger.error("Error creating BOQ collection: %s", exc)
             raise
 
     def insert_vector(
@@ -128,8 +128,8 @@ class QdrantSchemaManager:
                 points=[point],
             )
             return True
-        except Exception as e:
-            self.logger.error(f"Error inserting vector: {e}")
+        except Exception as exc: 
+            self.logger.error("Error inserting vector: %s", exc)
             return False
 
     def batch_insert_vectors(
@@ -158,8 +158,8 @@ class QdrantSchemaManager:
             )
             self.logger.info(f"Inserted {len(points)} vectors into {collection}")
             return len(points)
-        except Exception as e:
-            self.logger.error(f"Error in batch insert: {e}")
+        except Exception as exc:  
+            self.logger.error("Error in batch insert: %s", exc)
             return 0
 
     def search(
@@ -190,8 +190,8 @@ class QdrantSchemaManager:
                 }
                 for hit in results
             ]
-        except Exception as e:
-            self.logger.error(f"Error searching vectors: {e}")
+        except Exception as exc: 
+            self.logger.error("Error searching vectors: %s", exc)
             return []
 
     def filter_by_payload(
@@ -238,8 +238,8 @@ class QdrantSchemaManager:
             
             return all_points
         
-        except Exception as e:
-            self.logger.error(f"Error filtering by payload: {e}")
+        except Exception as exc:  
+            self.logger.error("Error filtering by payload: %s", exc)
             return []
 
     def get_collection_info(self, collection_name: Optional[str] = None) -> Dict[str, Any]:
@@ -257,8 +257,8 @@ class QdrantSchemaManager:
                     "distance": str(info.config.params.vectors.distance),
                 },
             }
-        except Exception as e:
-            self.logger.error(f"Error getting collection info: {e}")
+        except Exception as exc:  
+            self.logger.error("Error getting collection info: %s", exc)
             return {}
 
     def delete_collection(self, collection_name: Optional[str] = None) -> bool:
@@ -269,6 +269,6 @@ class QdrantSchemaManager:
             self.client.delete_collection(collection)
             self.logger.warning(f"Deleted collection: {collection}")
             return True
-        except Exception as e:
-            self.logger.error(f"Error deleting collection: {e}")
+        except Exception as exc:  
+            self.logger.error("Error deleting collection: %s", exc)
             return False
