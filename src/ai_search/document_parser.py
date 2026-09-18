@@ -163,12 +163,6 @@ class ScannedPDFExtractor:
         
         if self.ocr is None:  # Initialize only when needed
             self.ocr = PaddleOCR(use_angle_cls=True, lang="en")
-
-    def extract(self, pdf_path: str) -> List[ExtractedPage]:
-        """Extract text from scanned PDF using OCR"""
-        if not self.ocr:
-            self.logger.error("PaddleOCR not installed. Install with: pip install paddleocr")
-            raise RuntimeError("PaddleOCR required for scanned PDF extraction")
         
         pages = []
         
@@ -179,8 +173,14 @@ class ScannedPDFExtractor:
                 # Convert page to image
                 pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2x zoom for better OCR
                 img_data = pix.tobytes("ppm")
-                img = Image.open(io.BytesIO(img_data))
+                # --- MEMORY CLEANUP ADDED HERE ---
+                img_bytes = io.BytesIO(img_data)
+                img = Image.open(img_bytes)
                 img_array = np.array(img)
+                
+                # Clean up memory buffers explicitly after converting to array
+                img.close()
+                img_bytes.close()
                 
                 # Run OCR
                 ocr_result = self.ocr.ocr(img_array, cls=True)
@@ -188,11 +188,11 @@ class ScannedPDFExtractor:
                 # Parse OCR results
                 text_lines = []
                 detected_tables = []
-                
-                for line in ocr_result:
-                    if line:
-                        for word_info in line:
-                            text_lines.append(word_info[1][0])  # Extract text
+
+                if ocr_result and ocr_result[0]:  # Ensure ocr_result isn't None or empty
+                    for line in ocr_result[0]:
+                        if line and len(line) >= 2:
+                            text_lines.append(line[1][0])  # Extract text string
                 
                 full_text = " ".join(text_lines)
                 
