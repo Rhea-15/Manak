@@ -2,9 +2,9 @@
 Dev 3: Tests for embedding pipeline
 """
 
-import pytest
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
 
 from src.ai_search.embedding_pipeline import (
     EmbeddingModel,
