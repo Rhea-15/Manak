@@ -200,31 +200,44 @@ class QdrantSchemaManager:
         value: Any,
         collection_name: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Filter points by payload field"""
+        """Filter points by payload field with pagination"""
         collection = collection_name or self.config.collection_name
         
         try:
-            results = self.client.scroll(
-                collection_name=collection,
-                scroll_filter=Filter(
-                    must=[
-                        FieldCondition(
-                            key=field,
-                            match=MatchValue(value=value),
-                        )
-                    ]
-                ),
-                limit=100,
-                with_payload=True,
-            )
+            all_points = []
+            offset = None
             
-            return [
-                {
-                    "id": point.id,
-                    "payload": point.payload,
-                }
-                for point in results[0]
-            ]
+            while True:
+                results = self.client.scroll(
+                    collection_name=collection,
+                    scroll_filter=Filter(
+                        must=[
+                            FieldCondition(
+                                key=field,
+                                match=MatchValue(value=value),
+                            )
+                        ]
+                    ),
+                    limit=100,
+                    offset=offset,
+                    with_payload=True,
+                )
+                
+                points, next_offset = results
+                all_points.extend([
+                    {
+                        "id": point.id,
+                        "payload": point.payload,
+                    }
+                    for point in points
+                ])
+                
+                if next_offset is None:
+                    break
+                offset = next_offset
+            
+            return all_points
+        
         except Exception as e:
             self.logger.error(f"Error filtering by payload: {e}")
             return []

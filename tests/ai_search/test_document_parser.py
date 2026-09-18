@@ -4,6 +4,7 @@ Pytest auto-discovery: tests/ai_search/test_*.py
 """
 
 import pytest
+import fitz
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -112,8 +113,8 @@ class TestDigitalPDFExtractor:
     def test_pdf_extraction_invalid_file(self):
         """Test error handling for invalid PDF"""
         extractor = DigitalPDFExtractor()
-        
-        with pytest.raises(Exception):
+    
+        with pytest.raises((fitz.FileNotFoundError, FileNotFoundError)):  
             extractor.extract("/nonexistent/file.pdf")
 
     def test_pdf_extraction_structure(self):

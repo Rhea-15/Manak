@@ -21,23 +21,28 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install PyTorch (CPU) & Dependencies
         run: |
           python -m pip install --upgrade pip
+          # Force CPU version of PyTorch to prevent CI memory timeouts
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           pip install pytest ruff
+          # Download required spaCy NLP model
+          python -m spacy download en_core_web_sm
 
-      - name: Lint with ruff (syntax + style errors)
+      - name: Lint with ruff
         run: ruff check . --output-format=github
 
-      - name: Run pytest across entire tests/ directory
+      - name: Run pytest
+        env:
+          PYTHONPATH: .
         run: pytest tests/ -v --tb=short
 
   frontend-checks:
     name: JS/TS Lint + Build Check
     runs-on: ubuntu-latest
-    # Only runs if a package.json exists anywhere — safe no-op otherwise
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

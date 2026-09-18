@@ -152,11 +152,17 @@ class DigitalPDFExtractor:
 
 
 class ScannedPDFExtractor:
-    """Extract text from scanned PDFs using PaddleOCR"""
-
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.ocr = PaddleOCR(use_angle_cls=True, lang="en") if PaddleOCR else None
+        self.ocr = None  # Lazy initialize instead
+
+    def extract(self, pdf_path: str) -> List[ExtractedPage]:
+        if PaddleOCR is None:
+            self.logger.error("PaddleOCR not installed. Install with: pip install paddleocr")
+            raise RuntimeError("PaddleOCR required for scanned PDF extraction")
+        
+        if self.ocr is None:  # Initialize only when needed
+            self.ocr = PaddleOCR(use_angle_cls=True, lang="en")
 
     def extract(self, pdf_path: str) -> List[ExtractedPage]:
         """Extract text from scanned PDF using OCR"""
@@ -230,14 +236,17 @@ class BOQExtractor:
         try:
             excel_file = pd.ExcelFile(file_path)
             
-            for sheet_name in excel_file.sheet_names:
+            for page_number, sheet_name in enumerate(excel_file.sheet_names, start=1):
                 df = pd.read_excel(file_path, sheet_name=sheet_name)
                 
                 # Convert DataFrame to table format
-                table = [df.columns.tolist()] + df.values.tolist()
+                table = [
+                    df.columns.tolist(),
+                    *[[str(cell) for cell in row] for row in df.values.tolist()]
+                ]
                 
                 extracted_page = ExtractedPage(
-                    page_number=1,
+                    page_number=page_number,
                     raw_text=df.to_string(),
                     tables=[table],
                     entities=[],
@@ -342,19 +351,30 @@ class DocumentParser:
             self.logger.warning("spaCy model not available; NER disabled")
             self.ner_processor = None
 
-    def parse(self, file_path: str) -> DocumentExtractionResult:
+    def parse(self, file_path: str, max_file_size_mb: int = 100) -> DocumentExtractionResult:
         """Main entry point: parse any supported document"""
         file_path = str(file_path)
+        file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
+        if file_size_mb > max_file_size_mb:
+            raise ValueError(
+                f"File size ({file_size_mb:.1f} MB) exceeds maximum ({max_file_size_mb} MB)"
+            )
         suffix = Path(file_path).suffix.lower()
         
         self.logger.info(f"Starting parse: {file_path}")
         
         # Determine document type and extract
         if suffix == ".pdf":
-            # Try digital first, fall back to scanned
             try:
                 pages = self.digital_extractor.extract(file_path)
-                doc_type = DocumentType.PDF_DIGITAL
+                # Check if extraction was meaningful
+                if pages and any(p.raw_text.strip() for p in pages):
+                    doc_type = DocumentType.PDF_DIGITAL
+                else:
+                    # Fall back to scanned PDF if digital extraction yielded no text
+                    self.logger.warning("Digital PDF extraction returned no meaningful text, attempting OCR")
+                    pages = self.scanned_extractor.extract(file_path)
+                    doc_type = DocumentType.PDF_SCANNED
             except Exception as e:
                 self.logger.warning(f"Digital extraction failed, trying OCR: {e}")
                 pages = self.scanned_extractor.extract(file_path)
@@ -381,10 +401,15 @@ class DocumentParser:
         else:
             raise ValueError(f"Unsupported file type: {suffix}")
         
-        # Run NER if available
+        # Run NER & Technical Entity Extraction if available
         if self.ner_processor:
             pages = self.ner_processor.extract_entities(pages)
-        
+            for page in pages:
+                technical_entities = self.ner_processor.extract_technical_entities(page.raw_text)
+                for entity in technical_entities:
+                    entity.page = page.page_number
+                page.entities.extend(technical_entities)
+
         # Build result
         result = DocumentExtractionResult(
             file_path=file_path,

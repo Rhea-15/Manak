@@ -4,7 +4,7 @@ Converts text into dense vectors for semantic search
 """
 
 import logging
-from typing import List, Dict, Union
+from typing import List, Dict, Union, overload, Optional
 import numpy as np
 
 from sentence_transformers import SentenceTransformer
@@ -32,12 +32,18 @@ class EmbeddingModel:
             self.logger.error(f"Error loading model {model_name}: {e}")
             raise
 
+    @overload
+    def encode(self, texts: str, **kwargs) -> List[float]: ...
+
+    @overload
+    def encode(self, texts: List[str], **kwargs) -> List[List[float]]: ...
+
     def encode(
         self,
         texts: Union[str, List[str]],
         normalize: bool = True,
         batch_size: int = 32,
-    ) -> Union[List[float], np.ndarray]:
+    ) -> Union[List[float], List[List[float]]]:
         """
         Encode text(s) to dense vectors.
         
@@ -183,12 +189,17 @@ class EmbeddingPipeline:
         return result
 
     @staticmethod
-    def _chunk_text(text: str, chunk_size: int = 500) -> List[Dict]:
-        """Split text into overlapping chunks"""
-        chunks = []
-        overlap = 100
+    def _chunk_text(text: str, chunk_size: int = 500, overlap: int = 100) -> List[Dict]:
+        """Split text into overlapping chunks with validation"""
+        if chunk_size <= 0:
+            raise ValueError(f"chunk_size must be positive, got {chunk_size}")
+        if overlap >= chunk_size:
+            raise ValueError(f"overlap ({overlap}) must be < chunk_size ({chunk_size})")
         
-        for i in range(0, len(text), chunk_size - overlap):
+        chunks = []
+        step = chunk_size - overlap
+        
+        for i in range(0, len(text), step):
             chunk_text = text[i : i + chunk_size]
             chunks.append({
                 "text": chunk_text.strip(),
