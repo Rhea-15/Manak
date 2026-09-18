@@ -8,7 +8,6 @@ on:
 
 jobs:
   python-tests:
-    name: Python Lint + Pytest
     runs-on: ubuntu-latest
 
     steps:
@@ -59,8 +58,8 @@ jobs:
         run: pytest tests/ -v --tb=short
 
   frontend-checks:
-    name: JS/TS Lint + Build Check
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
