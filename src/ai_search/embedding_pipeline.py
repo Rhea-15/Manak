@@ -3,6 +3,7 @@ Dev 3: Embedding Pipeline using bge-m3
 Converts text into dense vectors for semantic search
 """
 
+
 import logging
 from typing import overload
 
@@ -11,6 +12,32 @@ from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
+from typing import TypedDict
+
+
+class PageInput(TypedDict, total=False):
+    page_number: int
+    text: str
+
+class EmbeddedChunk(TypedDict):
+    page_number: int
+    chunk_index: int
+    text: str
+    char_range: tuple[int, int]
+    vector: list[float]
+
+
+class StandardInput(TypedDict, total=False):
+    code: str
+    title: str
+    definition: str
+
+
+class EmbeddedStandard(TypedDict):
+    code: str | None
+    title: str | None
+    definition: str | None
+    vector: list[float]
 
 class EmbeddingModel:
     """Wrapper around bge-m3 embedding model"""
@@ -33,10 +60,14 @@ class EmbeddingModel:
             raise
 
     @overload
-    def encode(self, texts: str, **kwargs) -> list[float]: ...
+    def encode(
+        self, texts: str, normalize: bool = True, batch_size: int = 32
+    ) -> list[float]: ...
 
     @overload
-    def encode(self, texts: list[str], **kwargs) -> list[list[float]]: ...
+    def encode(
+        self, texts: list[str], normalize: bool = True, batch_size: int = 32
+    ) -> list[list[float]]: ...
 
     def encode(
         self,
@@ -90,9 +121,9 @@ class EmbeddingPipeline:
 
     def embed_document_pages(
         self,
-        pages: list[dict[str, str]],
+        pages: list[PageInput],
         chunk_size: int = 500,
-    ) -> list[dict[str, str | list[float]]]:
+    ) -> list[EmbeddedChunk]:
         """
         Embed document pages, chunking long texts.
 
@@ -127,8 +158,8 @@ class EmbeddingPipeline:
 
     def embed_standards(
         self,
-        standards: list[dict[str, str]],
-    ) -> list[dict[str, str | list[float]]]:
+        standards: list[StandardInput],
+    ) -> list[EmbeddedStandard]:
         """
         Embed Indian Standard definitions.
 
@@ -194,12 +225,16 @@ class EmbeddingPipeline:
         chunks = []
         step = chunk_size - overlap
 
-        for i in range(0, len(text), step):
+        i = 0
+        while i < len(text):
             chunk_text = text[i : i + chunk_size]
             chunks.append({
                 "text": chunk_text.strip(),
                 "char_range": (i, i + len(chunk_text)),
             })
+            if i + chunk_size >= len(text):
+                break
+            i += step
 
         return chunks
 
@@ -211,18 +246,23 @@ class EmbeddingPipeline:
         """
         Find semantically similar documents.
 
+        NOTE: Not yet implemented. Actual similarity search is delegated to
+        Qdrant (see qdrant_schema.QdrantSchemaManager.search). This method
+        exists as a documented seam for callers that want to embed a query
+        and search without touching Qdrant directly — implement it once
+        that wiring is in place.
+
         Args:
             query: Query text
             top_k: Number of results
 
         Returns:
             List of {"text": str, "similarity": float}
-        """
-        # Placeholder — actual similarity search happens in Qdrant.
-        # query is embedded here only to validate the model path end-to-end;
-        # the vector itself isn't used yet.
-        _ = self.embedder.encode(query)
 
-        return [
-            {"text": "Similar document", "similarity": 0.92},
-        ]
+        Raises:
+            NotImplementedError: always, until Qdrant search is wired in here.
+        """
+        raise NotImplementedError(
+            "similarity_search is not implemented; use "
+            "QdrantSchemaManager.search with an embedded query vector instead."
+        )

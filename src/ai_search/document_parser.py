@@ -39,7 +39,7 @@ class ExtractedEntity:
     entity_type: str  # e.g., MATERIAL, DIMENSION, STANDARD_CODE
     confidence: float
     page: int
-    bbox: tuple[float, float, float, float] = None  # (x0, y0, x1, y1)
+    bbox: tuple[float, float, float, float] | None = None  # (x0, y0, x1, y1)
 
 
 @dataclass
@@ -50,7 +50,7 @@ class ExtractedPage:
     tables: list[list[list[str]]]  # List of tables, each table is list of rows
     entities: list[ExtractedEntity]
     document_type: DocumentType
-    layout_info: dict[str, Any] = None
+    layout_info: dict[str, Any] | None = None
 
 
 @dataclass
