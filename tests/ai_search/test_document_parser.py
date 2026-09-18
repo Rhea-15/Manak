@@ -3,18 +3,18 @@ Dev 3: Tests for document parsing pipeline
 Pytest auto-discovery: tests/ai_search/test_*.py
 """
 
-import pytest
-import fitz
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+
+import fitz
+import pytest
 
 from src.ai_search.document_parser import (
-    DocumentParser,
-    ExtractedPage,
-    ExtractedEntity,
-    DocumentType,
     DigitalPDFExtractor,
+    DocumentParser,
+    DocumentType,
+    ExtractedEntity,
+    ExtractedPage,
     SpacyNERProcessor,
 )
 

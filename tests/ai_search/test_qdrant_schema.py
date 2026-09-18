@@ -2,8 +2,7 @@
 Dev 3: Tests for Qdrant schema management
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from src.ai_search.qdrant_schema import (
     QdrantConfig,

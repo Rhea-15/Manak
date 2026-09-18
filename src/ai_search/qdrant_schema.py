@@ -4,18 +4,17 @@ Initializes collections and manages vector embeddings for hybrid search
 """
 
 import logging
-from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
-import json
+from typing import Any
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import (
     Distance,
-    VectorParams,
-    PointStruct,
     FieldCondition,
-    MatchValue,
     Filter,
+    MatchValue,
+    PointStruct,
+    VectorParams,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,7 +56,6 @@ class QdrantSchemaManager:
         - page_content: str (for full-text search)
         """
         try:
-            # Check if collection exists
             collections = self.client.get_collections()
             if any(col.name == self.config.collection_name for col in collections.collections):
                 self.logger.warning(f"Collection '{self.config.collection_name}' already exists")
@@ -71,14 +69,13 @@ class QdrantSchemaManager:
                 ),
             )
 
-            # Add payload schema (metadata about vectors)
             self.logger.info(
                 f"Created collection '{self.config.collection_name}' with "
                 f"{self.config.vector_size}-dim vectors"
             )
             return True
 
-        except Exception as exc:  
+        except Exception as exc:
             self.logger.error("Error creating collection: %s", exc)
             raise
 
@@ -87,7 +84,7 @@ class QdrantSchemaManager:
         try:
             collection_name = f"{self.config.collection_name}_boq_items"
             collections = self.client.get_collections()
-            
+
             if any(col.name == collection_name for col in collections.collections):
                 self.logger.warning(f"Collection '{collection_name}' already exists")
                 return False
@@ -103,20 +100,20 @@ class QdrantSchemaManager:
             self.logger.info(f"Created BOQ items collection: {collection_name}")
             return True
 
-        except Exception as exc:  
+        except Exception as exc:
             self.logger.error("Error creating BOQ collection: %s", exc)
             raise
 
     def insert_vector(
         self,
         point_id: int,
-        vector: List[float],
-        payload: Dict[str, Any],
-        collection_name: Optional[str] = None,
+        vector: list[float],
+        payload: dict[str, Any],
+        collection_name: str | None = None,
     ) -> bool:
         """Insert a single vector point"""
         collection = collection_name or self.config.collection_name
-        
+
         try:
             point = PointStruct(
                 id=point_id,
@@ -128,21 +125,21 @@ class QdrantSchemaManager:
                 points=[point],
             )
             return True
-        except Exception as exc: 
+        except Exception as exc:  # noqa: BLE001 — intentional: return False on any insert failure
             self.logger.error("Error inserting vector: %s", exc)
             return False
 
     def batch_insert_vectors(
         self,
-        points: List[Dict[str, Any]],
-        collection_name: Optional[str] = None,
+        points: list[dict[str, Any]],
+        collection_name: str | None = None,
     ) -> int:
         """
         Batch insert multiple vectors
         points format: [{"id": int, "vector": List[float], "payload": Dict}, ...]
         """
         collection = collection_name or self.config.collection_name
-        
+
         try:
             point_structs = [
                 PointStruct(
@@ -158,20 +155,20 @@ class QdrantSchemaManager:
             )
             self.logger.info(f"Inserted {len(points)} vectors into {collection}")
             return len(points)
-        except Exception as exc:  
+        except Exception as exc:  # noqa: BLE001 — intentional: return 0 on any batch failure
             self.logger.error("Error in batch insert: %s", exc)
             return 0
 
     def search(
         self,
-        query_vector: List[float],
+        query_vector: list[float],
         limit: int = 10,
-        collection_name: Optional[str] = None,
-        filters: Optional[Filter] = None,
-    ) -> List[Dict[str, Any]]:
+        collection_name: str | None = None,
+        filters: Filter | None = None,
+    ) -> list[dict[str, Any]]:
         """Search by vector similarity"""
         collection = collection_name or self.config.collection_name
-        
+
         try:
             results = self.client.search(
                 collection_name=collection,
@@ -181,7 +178,7 @@ class QdrantSchemaManager:
                 with_payload=True,
                 with_vectors=False,
             )
-            
+
             return [
                 {
                     "id": hit.id,
@@ -190,7 +187,7 @@ class QdrantSchemaManager:
                 }
                 for hit in results
             ]
-        except Exception as exc: 
+        except Exception as exc:  # noqa: BLE001 — intentional: return [] on any search failure
             self.logger.error("Error searching vectors: %s", exc)
             return []
 
@@ -198,15 +195,15 @@ class QdrantSchemaManager:
         self,
         field: str,
         value: Any,
-        collection_name: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        collection_name: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Filter points by payload field with pagination"""
         collection = collection_name or self.config.collection_name
-        
+
         try:
             all_points = []
             offset = None
-            
+
             while True:
                 results = self.client.scroll(
                     collection_name=collection,
@@ -222,7 +219,7 @@ class QdrantSchemaManager:
                     offset=offset,
                     with_payload=True,
                 )
-                
+
                 points, next_offset = results
                 all_points.extend([
                     {
@@ -231,21 +228,21 @@ class QdrantSchemaManager:
                     }
                     for point in points
                 ])
-                
+
                 if next_offset is None:
                     break
                 offset = next_offset
-            
+
             return all_points
-        
-        except Exception as exc:  
+
+        except Exception as exc:  # noqa: BLE001 — intentional: return [] on any filter failure
             self.logger.error("Error filtering by payload: %s", exc)
             return []
 
-    def get_collection_info(self, collection_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_collection_info(self, collection_name: str | None = None) -> dict[str, Any]:
         """Get collection statistics"""
         collection = collection_name or self.config.collection_name
-        
+
         try:
             info = self.client.get_collection(collection)
             return {
@@ -257,18 +254,18 @@ class QdrantSchemaManager:
                     "distance": str(info.config.params.vectors.distance),
                 },
             }
-        except Exception as exc:  
+        except Exception as exc:  # noqa: BLE001 — intentional: return {} on any lookup failure
             self.logger.error("Error getting collection info: %s", exc)
             return {}
 
-    def delete_collection(self, collection_name: Optional[str] = None) -> bool:
+    def delete_collection(self, collection_name: str | None = None) -> bool:
         """Delete a collection (use with caution!)"""
         collection = collection_name or self.config.collection_name
-        
+
         try:
             self.client.delete_collection(collection)
             self.logger.warning(f"Deleted collection: {collection}")
             return True
-        except Exception as exc:  
+        except Exception as exc:  # noqa: BLE001 — intentional: return False on any delete failure
             self.logger.error("Error deleting collection: %s", exc)
             return False
