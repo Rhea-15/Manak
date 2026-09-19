@@ -8,41 +8,74 @@ on:
 
 jobs:
   python-tests:
-    name: Python Lint + Pytest
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1. Define the paths that trigger Python tests based on the MANAK file structure
+      - name: Check for Python changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - 'src/backend/**'
+              - 'src/db_graph/**'
+              - 'src/ai_search/**'
+              - 'src/orchestration/**'
+              - 'tests/**'
+              - 'requirements.txt'
+              - 'requirements-dev.txt'
+
+      # 2. Add the IF condition to all subsequent steps
       - name: Set up Python
+        if: steps.filter.outputs.python == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install PyTorch (CPU) & Dependencies
+        if: steps.filter.outputs.python == 'true'
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          if [ -f requirements.txt ]; then pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           pip install pytest ruff
+          python -m spacy download en_core_web_sm
 
-      - name: Lint with ruff (syntax + style errors)
+      - name: Lint with ruff
+        if: steps.filter.outputs.python == 'true'
         run: ruff check . --output-format=github
 
-      - name: Run pytest across entire tests/ directory
+      - name: Run pytest
+        if: steps.filter.outputs.python == 'true'
+        env:
+          PYTHONPATH: .
         run: pytest tests/ -v --tb=short
 
   frontend-checks:
-    name: JS/TS Lint + Build Check
     runs-on: ubuntu-latest
-    # Only runs if a package.json exists anywhere — safe no-op otherwise
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1. Define the paths that trigger Frontend tests based on the MANAK file structure
+      - name: Check for Frontend changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'src/frontend/**'
+              - 'package.json'
+
       - name: Check for package.json
+        if: steps.filter.outputs.frontend == 'true'
         id: check_frontend
         run: |
           if find . -maxdepth 3 -name "package.json" -not -path "*/node_modules/*" | grep -q .; then
@@ -52,14 +85,14 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.check_frontend.outputs.found == 'true'
+        if: steps.filter.outputs.frontend == 'true' && steps.check_frontend.outputs.found == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
       - name: Install & Lint
-        if: steps.check_frontend.outputs.found == 'true'
+        if: steps.filter.outputs.frontend == 'true' && steps.check_frontend.outputs.found == 'true'
         run: |
           npm ci --prefer-offline --no-audit || npm install
           npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 || true
