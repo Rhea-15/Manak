@@ -1,11 +1,14 @@
 from fastapi.testclient import TestClient
+
 from src.orchestration.main import app
 
 client = TestClient(app)
 
 
 def test_search_valid_request():
-    resp = client.post("/api/v1/search", json={"query": "fireproof wire", "language": "en", "top_k": 3})
+    resp = client.post(
+        "/api/v1/search", json={"query": "fireproof wire", "language": "en", "top_k": 3}
+    )
     assert resp.status_code == 200
     body = resp.json()
     assert "results" in body
@@ -20,7 +23,10 @@ def test_search_invalid_request_missing_query():
 def test_recommendation_valid_request():
     resp = client.post(
         "/api/v1/recommendation",
-        json={"item_id": "item-1", "original_spec": "PVC Insulated Wires as per IS 694:1990"},
+        json={
+            "item_id": "item-1",
+            "original_spec": "PVC Insulated Wires as per IS 694:1990",
+        },
     )
     assert resp.status_code == 200
     assert resp.json()["source"] == "rules_engine"
@@ -35,6 +41,8 @@ def test_score_valid_request():
 def test_score_invalid_request_missing_tender_id():
     resp = client.post("/api/v1/score", json={})
     assert resp.status_code == 422
+
+
 # FastAPI 0.141+ wraps included routers; unwrap via original_router to find real paths
 def test_routes_registered():
     def collect_paths(routes):

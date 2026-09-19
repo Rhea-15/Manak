@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from ..schemas.search import SearchRequest, SearchResponse
 from ..services import search_service
 

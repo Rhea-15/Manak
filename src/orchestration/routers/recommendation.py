@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from ..schemas.recommendation import RecommendationRequest, RecommendationResponse
 from ..services import recommendation_service
 

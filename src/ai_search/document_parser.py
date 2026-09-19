@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class DocumentType(Enum):
     """Enum for supported document types"""
+
     PDF_DIGITAL = "pdf_digital"
     PDF_SCANNED = "pdf_scanned"
     BOQ_EXCEL = "boq_excel"
@@ -35,6 +36,7 @@ class DocumentType(Enum):
 @dataclass
 class ExtractedEntity:
     """Single extracted entity from document"""
+
     text: str
     entity_type: str  # e.g., MATERIAL, DIMENSION, STANDARD_CODE
     confidence: float
@@ -45,6 +47,7 @@ class ExtractedEntity:
 @dataclass
 class ExtractedPage:
     """Page-level extraction result"""
+
     page_number: int
     raw_text: str
     tables: list[list[list[str]]]  # List of tables, each table is list of rows
@@ -56,6 +59,7 @@ class ExtractedPage:
 @dataclass
 class DocumentExtractionResult:
     """Complete document extraction result"""
+
     file_path: str
     document_type: DocumentType
     pages: list[ExtractedPage]
@@ -144,7 +148,9 @@ class ScannedPDFExtractor:
 
     def extract(self, pdf_path: str) -> list[ExtractedPage]:
         if PaddleOCR is None:
-            self.logger.error("PaddleOCR not installed. Install with: pip install paddleocr")
+            self.logger.error(
+                "PaddleOCR not installed. Install with: pip install paddleocr"
+            )
             raise RuntimeError("PaddleOCR required for scanned PDF extraction")
 
         if self.ocr is None:
@@ -156,7 +162,9 @@ class ScannedPDFExtractor:
             doc = fitz.open(pdf_path)
 
             for page_num, page in enumerate(doc):
-                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2x zoom for better OCR
+                pix = page.get_pixmap(
+                    matrix=fitz.Matrix(2, 2)
+                )  # 2x zoom for better OCR
                 img_data = pix.tobytes("ppm")
                 img_bytes = io.BytesIO(img_data)
                 img = Image.open(img_bytes)
@@ -209,7 +217,9 @@ class BOQExtractor:
         try:
             import pandas as pd
         except ImportError:
-            self.logger.error("pandas required. Install with: pip install pandas openpyxl")
+            self.logger.error(
+                "pandas required. Install with: pip install pandas openpyxl"
+            )
             raise
 
         pages = []
@@ -222,7 +232,7 @@ class BOQExtractor:
 
                 table = [
                     df.columns.tolist(),
-                    *[[str(cell) for cell in row] for row in df.values.tolist()]
+                    *[[str(cell) for cell in row] for row in df.values.tolist()],
                 ]
 
                 extracted_page = ExtractedPage(
@@ -276,7 +286,9 @@ class SpacyNERProcessor:
                 entities.append(entity)
 
             page.entities = entities
-            self.logger.debug(f"Page {page.page_number}: extracted {len(entities)} entities")
+            self.logger.debug(
+                f"Page {page.page_number}: extracted {len(entities)} entities"
+            )
 
         return pages
 
@@ -289,7 +301,7 @@ class SpacyNERProcessor:
 
         entities = []
 
-        is_pattern = r'\b(IS|IS/IEC|IS:)\s*(\d{4,5})\b'
+        is_pattern = r"\b(IS|IS/IEC|IS:)\s*(\d{4,5})\b"
         for match in re.finditer(is_pattern, text, re.IGNORECASE):
             entities.append(
                 ExtractedEntity(
@@ -300,7 +312,7 @@ class SpacyNERProcessor:
                 )
             )
 
-        dimension_pattern = r'\b(\d+(?:\.\d+)?)\s*(mm|cm|m|kg|g|l|ml)\b'
+        dimension_pattern = r"\b(\d+(?:\.\d+)?)\s*(mm|cm|m|kg|g|l|ml)\b"
         for match in re.finditer(dimension_pattern, text, re.IGNORECASE):
             entities.append(
                 ExtractedEntity(
@@ -329,7 +341,9 @@ class DocumentParser:
             self.logger.warning("spaCy model not available; NER disabled")
             self.ner_processor = None
 
-    def parse(self, file_path: str, max_file_size_mb: int = 100) -> DocumentExtractionResult:
+    def parse(
+        self, file_path: str, max_file_size_mb: int = 100
+    ) -> DocumentExtractionResult:
         """Main entry point: parse any supported document"""
         file_path = str(file_path)
         file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
@@ -347,7 +361,9 @@ class DocumentParser:
                 if pages and any(p.raw_text.strip() for p in pages):
                     doc_type = DocumentType.PDF_DIGITAL
                 else:
-                    self.logger.warning("Digital PDF extraction returned no meaningful text, attempting OCR")
+                    self.logger.warning(
+                        "Digital PDF extraction returned no meaningful text, attempting OCR"
+                    )
                     pages = self.scanned_extractor.extract(file_path)
                     doc_type = DocumentType.PDF_SCANNED
             except Exception as e:  # noqa: BLE001 — intentional: any extraction failure falls back to OCR
@@ -379,7 +395,9 @@ class DocumentParser:
         if self.ner_processor:
             pages = self.ner_processor.extract_entities(pages)
             for page in pages:
-                technical_entities = self.ner_processor.extract_technical_entities(page.raw_text)
+                technical_entities = self.ner_processor.extract_technical_entities(
+                    page.raw_text
+                )
                 for entity in technical_entities:
                     entity.page = page.page_number
                 page.entities.extend(technical_entities)

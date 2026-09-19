@@ -35,7 +35,15 @@ def mock_score(tender_id: str) -> dict:
         "score": 52,
         "verdict": "Needs Revision",
         "critical_alerts": [
-            {"type": "outdated_spec", "message": "IS 694:1990 superseded by IS 694:2010", "severity": "high"},
-            {"type": "mandatory_qco", "message": "ISI marking under QCO 2023 strictly mandatory for Item #1", "severity": "high"},
+            {
+                "type": "outdated_spec",
+                "message": "IS 694:1990 superseded by IS 694:2010",
+                "severity": "high",
+            },
+            {
+                "type": "mandatory_qco",
+                "message": "ISI marking under QCO 2023 strictly mandatory for Item #1",
+                "severity": "high",
+            },
         ],
-    } 
+    }

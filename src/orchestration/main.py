@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from .routers import search, recommendation, score
+
+from .routers import recommendation, score, search
 
 app = FastAPI(
     title="MANAK Orchestration Layer",
