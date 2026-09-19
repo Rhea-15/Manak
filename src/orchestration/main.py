@@ -14,4 +14,5 @@ app.include_router(score.router)
 
 @app.get("/health")
 def health() -> dict:
+    """Return a simple liveness check confirming the orchestration service is running."""
     return {"status": "ok"}

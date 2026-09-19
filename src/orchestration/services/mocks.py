@@ -1,4 +1,5 @@
 def mock_search(query: str, top_k: int = 5) -> dict:
+    """Return a fixed mock search response, standing in for Dev 3's real hybrid search pipeline."""
     return {
         "query": query,
         "results": [
@@ -15,6 +16,7 @@ def mock_search(query: str, top_k: int = 5) -> dict:
 
 
 def mock_recommendation(item_id: str, original_spec: str) -> dict:
+    """Return a fixed mock recommendation, standing in for Dev 1's real rules engine output."""
     return {
         "item_id": item_id,
         "original_spec": original_spec,
@@ -27,6 +29,7 @@ def mock_recommendation(item_id: str, original_spec: str) -> dict:
 
 
 def mock_score(tender_id: str) -> dict:
+    """Return a fixed mock Tender Quality Score, standing in for Dev 2's real scoring formula."""
     return {
         "tender_id": tender_id,
         "score": 52,

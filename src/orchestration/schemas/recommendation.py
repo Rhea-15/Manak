@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 
 
 class RecommendationRequest(BaseModel):
-    item_id: str
-    original_spec: str
+    item_id: str = Field(..., min_length=1)
+    original_spec: str = Field(..., min_length=1)
 
 
 class RecommendationResponse(BaseModel):
