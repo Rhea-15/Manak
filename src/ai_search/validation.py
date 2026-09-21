@@ -110,7 +110,7 @@ class RulesEngine:
                 ))
                 continue
             
-            if not normalized_value:
+            if normalized_value is None or normalized_value == "":
                 continue
             
             # Check pattern

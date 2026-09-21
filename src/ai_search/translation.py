@@ -100,7 +100,10 @@ class IndicTrans2Translator:
             
             # Decode
             translated = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
-            return translated[0]
+            
+            # Postprocess to handle entity placeholders correctly
+            postprocessed = processor.postprocess_batch(translated, lang=target_lang)
+            return postprocessed[0]
         
         except (ImportError, RuntimeError, ValueError, KeyError) as e:
             self.logger.error(f"Translation error: {e}")
@@ -139,7 +142,7 @@ class IndicTrans2Translator:
             # Map to IndicTrans2 format
             lang_mapping = {
                 "hi": "hin_Deva",
-                "ta": "tam_Tamil",
+                "ta": "tam_Taml",  # Fix: Updated to correct IndicTrans2 code
                 "te": "tel_Telu",
                 "kn": "kan_Knda",
                 "ml": "mal_Mlym",
