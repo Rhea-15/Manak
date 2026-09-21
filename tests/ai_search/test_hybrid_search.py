@@ -3,9 +3,10 @@ Dev 3: Tests for Hybrid Search and RRF
 """
 
 import pytest
+
 from src.ai_search.hybrid_search import (
-    ReciprocalRankFusion,
     HybridSearchEngine,
+    ReciprocalRankFusion,
     SearchResult,
 )
 

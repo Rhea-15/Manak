@@ -4,7 +4,6 @@ Combines dense vector search with BM25 lexical search
 """
 
 import logging
-from typing import List, Dict, Tuple
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -37,9 +36,9 @@ class ReciprocalRankFusion:
 
     def fuse(
         self,
-        vector_results: List[Dict[str, float]],
-        bm25_results: List[Dict[str, float]],
-    ) -> List[SearchResult]:
+        vector_results: list[dict[str, float]],
+        bm25_results: list[dict[str, float]],
+    ) -> list[SearchResult]:
         """
         Fuse two ranked lists using RRF algorithm.
         
@@ -124,10 +123,10 @@ class HybridSearchEngine:
     def search_rrf(
         self,
         query: str,
-        vector_results: List[Dict],
-        bm25_results: List[Dict],
+        vector_results: list[dict],
+        bm25_results: list[dict],
         top_k: int = 10,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """
         Perform hybrid search using RRF fusion.
         
@@ -149,10 +148,10 @@ class HybridSearchEngine:
     def search_weighted(
         self,
         query: str,
-        vector_results: List[Dict],
-        bm25_results: List[Dict],
+        vector_results: list[dict],
+        bm25_results: list[dict],
         top_k: int = 10,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """
         Perform hybrid search using weighted combination.
         
@@ -200,7 +199,7 @@ class HybridSearchEngine:
         
         return results
 
-    def get_config(self) -> Dict:
+    def get_config(self) -> dict:
         """Get current hybrid search configuration"""
         return {
             "vector_weight": self.vector_weight,

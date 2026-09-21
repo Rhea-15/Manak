@@ -4,7 +4,6 @@ Supports translating regional Indian language queries to English
 """
 
 import logging
-from typing import Dict, Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,7 @@ class IndicTrans2Translator:
         self.tokenizer = None
         
         try:
-            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
             
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
@@ -72,6 +71,8 @@ class IndicTrans2Translator:
             return self._mock_translate(text)
         
         try:
+            import torch
+
             # Format: "<lang> <text>"
             input_text = f"{target_lang} {text}"
             
@@ -90,7 +91,7 @@ class IndicTrans2Translator:
             translated = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
             return translated[0]
         
-        except Exception as e:
+        except (ImportError, RuntimeError, ValueError, KeyError) as e:
             self.logger.error(f"Translation error: {e}")
             return text  # Return original on error
 
@@ -102,7 +103,7 @@ class IndicTrans2Translator:
         # Mock: return text as-is with indicator
         return text
 
-    def detect_language(self, text: str) -> Optional[str]:
+    def detect_language(self, text: str) -> str | None:
         """
         Detect language of input text.
         
@@ -116,8 +117,12 @@ class IndicTrans2Translator:
             return None
         
         try:
-            from langdetect import detect
-            
+            from langdetect import LangDetectException, detect
+        except ImportError as e:
+            self.logger.debug(f"langdetect not available: {e}")
+            return None
+
+        try:
             lang_code = detect(text)
             
             # Map to IndicTrans2 format
@@ -134,7 +139,7 @@ class IndicTrans2Translator:
             
             return lang_mapping.get(lang_code)
         
-        except Exception as e:
+        except LangDetectException as e:
             self.logger.debug(f"Language detection failed: {e}")
             return None
 
@@ -154,7 +159,7 @@ class TranslationPipeline:
         self.logger = logging.getLogger(__name__)
         self.translator = IndicTrans2Translator()
 
-    def normalize_query(self, query: str) -> Dict[str, str]:
+    def normalize_query(self, query: str) -> dict[str, str]:
         """
         Normalize query by detecting language and translating if needed.
         
@@ -193,10 +198,10 @@ class TranslationPipeline:
                 "is_translation": False,
             }
 
-    def supported_languages(self) -> List[str]:
+    def supported_languages(self) -> list[str]:
         """Get list of supported languages"""
         return list(SUPPORTED_LANGUAGES.values())
 
-    def get_language_name(self, lang_code: str) -> Optional[str]:
+    def get_language_name(self, lang_code: str) -> str | None:
         """Get friendly name for language code"""
         return SUPPORTED_LANGUAGES.get(lang_code)

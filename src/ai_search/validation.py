@@ -5,7 +5,6 @@ Validates standards against QCO, ISI, and mandatory requirements
 
 import logging
 import re
-from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -33,8 +32,8 @@ class ValidationError:
 class ValidationResult:
     """Complete validation result"""
     is_valid: bool
-    errors: List[ValidationError]
-    warnings: List[ValidationError]
+    errors: list[ValidationError]
+    warnings: list[ValidationError]
     score: float  # 0-100
 
 
@@ -46,7 +45,7 @@ class RulesEngine:
         self.logger = logging.getLogger(__name__)
         self.rules = self._initialize_rules()
 
-    def _initialize_rules(self) -> Dict:
+    def _initialize_rules(self) -> dict:
         """Define validation rules for standards"""
         return {
             "code": {
@@ -74,7 +73,7 @@ class RulesEngine:
             },
         }
 
-    def validate_standard(self, standard: Dict) -> ValidationResult:
+    def validate_standard(self, standard: dict) -> ValidationResult:
         """
         Validate a complete standard.
         
@@ -112,14 +111,13 @@ class RulesEngine:
                 continue
             
             # Check pattern
-            if "pattern" in rule:
-                if not re.match(rule["pattern"], str(value)):
-                    errors.append(ValidationError(
-                        field=field,
-                        error_type="format",
-                        message=rule["message"],
-                        severity="error"
-                    ))
+            if "pattern" in rule and not re.match(rule["pattern"], str(value)):
+                errors.append(ValidationError(
+                    field=field,
+                    error_type="format",
+                    message=rule["message"],
+                    severity="error"
+                ))
             
             # Check length
             if "min_length" in rule and len(str(value)) < rule["min_length"]:
@@ -168,7 +166,6 @@ class RulesEngine:
         errors.extend(cert_errors)
         
         # Calculate score
-        total_possible = len(self.rules) + 2  # Rules + certifications
         score = max(0, 100 - (len(errors) * 25))
         
         is_valid = len(errors) == 0
@@ -180,33 +177,31 @@ class RulesEngine:
             score=score
         )
 
-    def _validate_certifications(self, standard: Dict) -> List[ValidationError]:
+    def _validate_certifications(self, standard: dict) -> list[ValidationError]:
         """Validate certification requirements"""
         errors = []
         
         # Check QCO requirement
-        if standard.get("qco_required"):
-            if not standard.get("qco_code"):
-                errors.append(ValidationError(
-                    field="qco_code",
-                    error_type="certification",
-                    message="QCO code required but not provided",
-                    severity="error"
-                ))
+        if standard.get("qco_required") and not standard.get("qco_code"):
+            errors.append(ValidationError(
+                field="qco_code",
+                error_type="certification",
+                message="QCO code required but not provided",
+                severity="error"
+            ))
         
         # Check ISI requirement
-        if standard.get("isi_required"):
-            if not standard.get("isi_mark"):
-                errors.append(ValidationError(
-                    field="isi_mark",
-                    error_type="certification",
-                    message="ISI mark required but not provided",
-                    severity="error"
-                ))
+        if standard.get("isi_required") and not standard.get("isi_mark"):
+            errors.append(ValidationError(
+                field="isi_mark",
+                error_type="certification",
+                message="ISI mark required but not provided",
+                severity="error"
+            ))
         
         return errors
 
-    def get_validation_summary(self, result: ValidationResult) -> Dict:
+    def get_validation_summary(self, result: ValidationResult) -> dict:
         """Get human-readable summary of validation"""
         error_count = len(result.errors)
         warning_count = len(result.warnings)

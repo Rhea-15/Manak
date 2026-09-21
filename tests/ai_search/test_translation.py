@@ -2,11 +2,9 @@
 Dev 3: Tests for IndicTrans2 Multilingual Support
 """
 
-import pytest
 from src.ai_search.translation import (
     IndicTrans2Translator,
     TranslationPipeline,
-    SUPPORTED_LANGUAGES,
 )
 
 

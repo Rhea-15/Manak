@@ -2,8 +2,7 @@
 Dev 3: Tests for Validation Rules Engine
 """
 
-import pytest
-from src.ai_search.validation import RulesEngine, ValidationError
+from src.ai_search.validation import RulesEngine
 
 
 class TestRulesEngine:

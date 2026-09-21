@@ -2,9 +2,9 @@
 Dev 3: Tests for BM25 Lexical Indexing
 """
 
-import pytest
 import tempfile
 from pathlib import Path
+
 from src.ai_search.bm25_indexer import BM25Indexer
 
 

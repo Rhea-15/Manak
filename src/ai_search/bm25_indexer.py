@@ -3,10 +3,8 @@ Dev 3: BM25 Lexical Search Index
 Provides exact keyword matching complementary to dense vectors
 """
 
-import logging
-from typing import List, Dict
 import json
-from pathlib import Path
+import logging
 
 try:
     from rank_bm25 import BM25Plus
@@ -32,20 +30,20 @@ class BM25Indexer:
             self.logger.error("rank_bm25 not installed. Install with: pip install rank-bm25")
             raise RuntimeError("rank_bm25 required")
         
-        self.documents: List[List[str]] = []
-        self.doc_metadata: List[Dict] = []
+        self.documents: list[list[str]] = []
+        self.doc_metadata: list[dict] = []
         self.bm25_model: BM25Plus = None
         self.k1 = k1
         self.b = b
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """
         Tokenize text for BM25.
         Converts to lowercase and splits by whitespace.
         """
         return text.lower().split()
 
-    def add_documents(self, documents: List[Dict[str, str]]) -> None:
+    def add_documents(self, documents: list[dict[str, str]]) -> None:
         """
         Add documents to BM25 index.
         
@@ -69,7 +67,7 @@ class BM25Indexer:
         self.bm25_model = BM25Plus(self.documents, k1=self.k1, b=self.b)
         self.logger.info(f"Indexed {len(self.documents)} documents with BM25")
 
-    def search(self, query: str, top_k: int = 10) -> List[Dict]:
+    def search(self, query: str, top_k: int = 10) -> list[dict]:
         """
         Search documents using BM25.
         
@@ -130,14 +128,14 @@ class BM25Indexer:
                 }, f, indent=2)
             self.logger.info(f"Saved BM25 index to {path}")
             return True
-        except Exception as e:
+        except (OSError, TypeError, ValueError) as e:
             self.logger.error(f"Error saving index: {e}")
             return False
 
     def load_index(self, path: str) -> bool:
         """Load BM25 index and reconstruct model from disk"""
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             self.documents = data.get("documents", [])
             self.doc_metadata = data["doc_metadata"]
@@ -149,11 +147,11 @@ class BM25Indexer:
             
             self.logger.info(f"Loaded BM25 index from {path}")
             return True
-        except Exception as e:
+        except (OSError, KeyError, TypeError, ValueError) as e:
             self.logger.error(f"Error loading index: {e}")
             return False
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """Get indexing statistics"""
         return {
             "total_documents": len(self.documents),
