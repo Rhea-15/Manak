@@ -13,6 +13,6 @@ router = APIRouter(
 @router.get("/{standard_id}")
 def verify_standard(
     standard_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db)  # noqa: B008
 ):
     return verify_compliance_data(db, standard_id)

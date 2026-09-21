@@ -1,15 +1,14 @@
-from datetime import date
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from src.db_graph.models import (
-    Standard,
-    QCORequirement,
-    ISIRequirement,
     CRSRequirement,
-    HallmarkingRequirement
+    HallmarkingRequirement,
+    ISIRequirement,
+    QCORequirement,
+    Standard,
 )
-
 
 REQUIREMENT_MODELS = {
     "QCO": QCORequirement,
@@ -21,7 +20,7 @@ REQUIREMENT_MODELS = {
 
 def check_requirement_status(requirement, today=None):
     if today is None:
-        today = date.today()
+        today = datetime.now(timezone.utc).date()
 
     if not requirement.is_active:
         return {

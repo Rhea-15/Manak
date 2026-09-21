@@ -3,16 +3,14 @@ from sqlalchemy.orm import Session
 
 from src.backend.database import get_db
 from src.backend.rbac import require_role
-
 from src.db_graph.models import (
+    CRSRequirement,
+    HallmarkingRequirement,
+    ISIRequirement,
+    QCORequirement,
     Standard,
     StandardVersion,
-    QCORequirement,
-    ISIRequirement,
-    CRSRequirement,
-    HallmarkingRequirement
 )
-
 
 router = APIRouter(
     prefix="/quality-score",
@@ -141,7 +139,7 @@ def calculate_quality_score(db: Session, standard_id: int):
 @router.get("/{standard_id}")
 def get_quality_score(
     standard_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db),  # noqa: B008
     role: str = require_role("MANAGER")
 ):
     return calculate_quality_score(

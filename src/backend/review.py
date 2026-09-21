@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from src.backend.audit import create_audit_log
+
 from src.backend.database import get_db
 from src.db_graph.models import ReviewQueue
-
 
 router = APIRouter(
     prefix="/review",
@@ -14,7 +13,7 @@ router = APIRouter(
 
 @router.get("/queue")
 def get_review_queue(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db)  # noqa: B008
 ):
     items = (
         db.query(ReviewQueue)
@@ -40,7 +39,7 @@ def get_review_queue(
 @router.put("/{review_id}/approve")
 def approve_document(
     review_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db)  # noqa: B008
 ):
     item = (
         db.query(ReviewQueue)
@@ -77,7 +76,7 @@ def approve_document(
 @router.put("/{review_id}/reject")
 def reject_document(
     review_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db)  # noqa: B008
 ):
     item = (
         db.query(ReviewQueue)
