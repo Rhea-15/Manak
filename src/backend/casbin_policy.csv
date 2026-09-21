@@ -1,0 +1,26 @@
+p, ADMIN, /documents/upload, POST, allow
+p, ADMIN, /review/queue, GET, allow
+p, ADMIN, /review/queue/*, PUT, allow
+p, ADMIN, /audit/logs, GET, allow
+p, ADMIN, /verification/*, GET, allow
+p, ADMIN, /quality-score/*, GET, allow
+p, ADMIN, /compliance/*, GET, allow
+p, ADMIN, /graph/standard/*, GET, allow
+p, ADMIN, /unified/*, GET, allow
+
+p, MANAGER, /documents/upload, POST, allow
+p, MANAGER, /review/queue, GET, allow
+p, MANAGER, /review/queue/*, PUT, allow
+p, MANAGER, /verification/*, GET, allow
+p, MANAGER, /quality-score/*, GET, allow
+p, MANAGER, /compliance/*, GET, allow
+p, MANAGER, /graph/standard/*, GET, allow
+p, MANAGER, /unified/*, GET, allow
+
+p, EXECUTIVE, /documents/upload, POST, allow
+p, EXECUTIVE, /review/queue, GET, allow
+p, EXECUTIVE, /verification/*, GET, allow
+p, EXECUTIVE, /quality-score/*, GET, allow
+p, EXECUTIVE, /compliance/*, GET, allow
+p, EXECUTIVE, /graph/standard/*, GET, allow
+p, EXECUTIVE, /unified/*, GET, allow
