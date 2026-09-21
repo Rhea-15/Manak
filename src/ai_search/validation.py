@@ -97,8 +97,11 @@ class RulesEngine:
         for field, rule in self.rules.items():
             value = standard.get(field)
             
+            # Normalize strings by stripping whitespace
+            normalized_value = value.strip() if isinstance(value, str) else value
+            
             # Check required
-            if rule.get("required") and not value:
+            if rule.get("required") and not normalized_value:
                 errors.append(ValidationError(
                     field=field,
                     error_type="required",
@@ -107,11 +110,11 @@ class RulesEngine:
                 ))
                 continue
             
-            if not value:
+            if not normalized_value:
                 continue
             
             # Check pattern
-            if "pattern" in rule and not re.match(rule["pattern"], str(value)):
+            if "pattern" in rule and not re.match(rule["pattern"], str(normalized_value)):
                 errors.append(ValidationError(
                     field=field,
                     error_type="format",
@@ -120,7 +123,7 @@ class RulesEngine:
                 ))
             
             # Check length
-            if "min_length" in rule and len(str(value)) < rule["min_length"]:
+            if "min_length" in rule and len(str(normalized_value)) < rule["min_length"]:
                 errors.append(ValidationError(
                     field=field,
                     error_type="length",
@@ -128,7 +131,7 @@ class RulesEngine:
                     severity="error"
                 ))
             
-            if "max_length" in rule and len(str(value)) > rule["max_length"]:
+            if "max_length" in rule and len(str(normalized_value)) > rule["max_length"]:
                 errors.append(ValidationError(
                     field=field,
                     error_type="length",
@@ -139,7 +142,7 @@ class RulesEngine:
             # Check numeric range
             if "min_value" in rule:
                 try:
-                    if int(value) < rule["min_value"]:
+                    if int(normalized_value) < rule["min_value"]:
                         errors.append(ValidationError(
                             field=field,
                             error_type="range",
@@ -151,7 +154,7 @@ class RulesEngine:
             
             if "max_value" in rule:
                 try:
-                    if int(value) > rule["max_value"]:
+                    if int(normalized_value) > rule["max_value"]:
                         errors.append(ValidationError(
                             field=field,
                             error_type="range",

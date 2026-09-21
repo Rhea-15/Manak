@@ -5,6 +5,7 @@ Provides exact keyword matching complementary to dense vectors
 
 import json
 import logging
+from typing import Any, TypedDict
 
 try:
     from rank_bm25 import BM25Plus
@@ -13,6 +14,10 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+class BM25Document(TypedDict):
+    id: int
+    text: str
+    metadata: dict[str, Any]
 
 class BM25Indexer:
     """BM25 lexical search implementation for exact keyword matching"""
@@ -43,7 +48,7 @@ class BM25Indexer:
         """
         return text.lower().split()
 
-    def add_documents(self, documents: list[dict[str, str]]) -> None:
+    def add_documents(self, documents: list[BM25Document]) -> None:
         """
         Add documents to BM25 index.
         
@@ -64,7 +69,11 @@ class BM25Indexer:
                 "metadata": doc.get("metadata", {}),
             })
         
-        self.bm25_model = BM25Plus(self.documents, k1=self.k1, b=self.b)
+        self.bm25_model = (
+            BM25Plus(self.documents, k1=self.k1, b=self.b) 
+            if self.documents 
+            else None
+        )
         self.logger.info(f"Indexed {len(self.documents)} documents with BM25")
 
     def search(self, query: str, top_k: int = 10) -> list[dict]:
@@ -78,6 +87,9 @@ class BM25Indexer:
         Returns:
             List of {"doc_id": int, "score": float, "text_preview": str, "metadata": {}}
         """
+        if top_k <= 0:
+            return []
+
         if not self.bm25_model or not self.documents:
             self.logger.error("BM25 model not initialized or empty")
             return []
@@ -101,7 +113,7 @@ class BM25Indexer:
         for idx in sorted_indices:
             score = float(scores[idx])
             # Only include results with positive relevance scores
-            if score <= 0:
+            if score <= 0 or not set(tokenized_query).intersection(self.documents[idx]):
                 continue
                 
             results.append({

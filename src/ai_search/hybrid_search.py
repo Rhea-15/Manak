@@ -31,6 +31,9 @@ class ReciprocalRankFusion:
             k: Smoothing parameter (default: 60, range: 40-100)
                Prevents extreme scores and balances different ranking systems
         """
+        if not (40 <= k <= 100):
+            raise ValueError(f"Smoothing parameter 'k' must be between 40 and 100. Received: {k}")
+            
         self.k = k
         self.logger = logging.getLogger(__name__)
 
@@ -63,20 +66,24 @@ class ReciprocalRankFusion:
         rrf_scores = {}
         
         for doc_id in all_doc_ids:
+            rrf_score = 0.0
+            
             # Find rank in vector results (1-indexed)
             vector_rank = next(
                 (i + 1 for i, r in enumerate(vector_results) if r["doc_id"] == doc_id),
-                len(vector_results) + 1,
+                None,
             )
+            if vector_rank is not None:
+                rrf_score += 1.0 / (self.k + vector_rank)
             
             # Find rank in BM25 results (1-indexed)
             bm25_rank = next(
                 (i + 1 for i, r in enumerate(bm25_results) if r["doc_id"] == doc_id),
-                len(bm25_results) + 1,
+                None,
             )
+            if bm25_rank is not None:
+                rrf_score += 1.0 / (self.k + bm25_rank)
             
-            # RRF score combines both ranks
-            rrf_score = 1.0 / (self.k + vector_rank) + 1.0 / (self.k + bm25_rank)
             rrf_scores[doc_id] = rrf_score
         
         # Sort by RRF score (descending)
@@ -139,6 +146,9 @@ class HybridSearchEngine:
         Returns:
             Fused and ranked results
         """
+        if top_k < 0:
+            return []
+
         # Use RRF to fuse results
         fused_results = self.rrf.fuse(vector_results, bm25_results)
         
@@ -166,12 +176,28 @@ class HybridSearchEngine:
         Returns:
             Weighted and ranked results
         """
-        # Normalize scores (0-1 range)
-        vector_max = max((r["score"] for r in vector_results), default=1.0)
-        bm25_max = max((r["score"] for r in bm25_results), default=1.0)
-        
-        vector_normalized = {r["doc_id"]: r["score"] / vector_max for r in vector_results}
-        bm25_normalized = {r["doc_id"]: r["score"] / bm25_max for r in bm25_results}
+        if top_k < 0:
+            return []
+
+        # Helper for range-aware normalization
+        def _normalize(results: list[dict]) -> dict[int, float]:
+            if not results:
+                return {}
+            scores = [r.get("score", 0.0) for r in results]
+            min_score, max_score = min(scores), max(scores)
+            
+            # Neutral normalization if all scores are identical
+            if min_score == max_score:
+                neutral = 1.0 if max_score > 0 else 0.0
+                return {r["doc_id"]: neutral for r in results}
+                
+            return {
+                r["doc_id"]: (r.get("score", 0.0) - min_score) / (max_score - min_score)
+                for r in results
+            }
+
+        vector_normalized = _normalize(vector_results)
+        bm25_normalized = _normalize(bm25_results)
         
         all_doc_ids = set(vector_normalized.keys()) | set(bm25_normalized.keys())
         

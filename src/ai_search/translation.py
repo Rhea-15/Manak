@@ -72,12 +72,23 @@ class IndicTrans2Translator:
         
         try:
             import torch
+            from IndicTransToolkit.processor import IndicProcessor
 
-            # Format: "<lang> <text>"
-            input_text = f"{target_lang} {text}"
+            processor = IndicProcessor(inference=True)
+            input_batch = processor.preprocess_batch(
+                [text],
+                src_lang=source_lang,
+                tgt_lang=target_lang,
+            )
             
             # Tokenize
-            inputs = self.tokenizer(input_text, return_tensors="pt")
+            inputs = self.tokenizer(
+                input_batch,
+                truncation=True,
+                padding="longest",
+                return_tensors="pt",
+                return_attention_mask=True,
+            )
             
             # Generate translation
             with torch.no_grad():
@@ -147,7 +158,11 @@ class IndicTrans2Translator:
         """Check if text is in an Indian language"""
         detected = self.detect_language(text)
         if detected:
-            return detected.split("_")[0] in SUPPORTED_LANGUAGES.values()
+            mapped_indic_codes = {
+                "hin", "tam", "tel", "kan", 
+                "mal", "mar", "guj", "ben"
+            }
+            return detected.split("_")[0] in mapped_indic_codes
         return False
 
 
@@ -159,7 +174,7 @@ class TranslationPipeline:
         self.logger = logging.getLogger(__name__)
         self.translator = IndicTrans2Translator()
 
-    def normalize_query(self, query: str) -> dict[str, str]:
+    def normalize_query(self, query: str) -> dict[str, str | bool]:
         """
         Normalize query by detecting language and translating if needed.
         
