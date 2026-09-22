@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 _WEIGHTS = {
     "completeness": 35,
     "standard_match": 25,
