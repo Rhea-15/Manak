@@ -1,19 +1,44 @@
 def mock_search(query: str, top_k: int = 5) -> dict:
-    """Return a fixed mock search response, standing in for Dev 3's real hybrid search pipeline."""
+    """Return a mock search response containing a slice of static candidates.
+
+    The response echoes ``query``, slices candidates using ``top_k``, and
+    reports a fixed elapsed time.
+    """
+    candidates = [
+        {
+            "is_code": "IS 694:2010",
+            "title": "PVC insulated cables for working voltages up to 1100V",
+            "score": 0.91,
+            "status": "active",
+            "snippet": "Flame Retardant Low Smoke (FRLS) copper conductor cables...",
+        },
+        {
+            "is_code": "IS 694:1990",
+            "title": "PVC insulated cables (superseded edition)",
+            "score": 0.74,
+            "status": "superseded",
+            "snippet": "Superseded by IS 694:2010 — retained for historical lookup only.",
+        },
+        {
+            "is_code": "IS 10810",
+            "title": "Methods of test for cables",
+            "score": 0.68,
+            "status": "active",
+            "snippet": "Mandatory test methods referenced by IS 694:2010, Clause 4.2.",
+        },
+        {
+            "is_code": "IS 8130",
+            "title": "Conductors for insulated electric cables and flexible cords",
+            "score": 0.61,
+            "status": "active",
+            "snippet": "Annealed copper conductor specification, cross-referenced allied standard.",
+        },
+    ]
     return {
         "query": query,
-        "results": [
-            {
-                "is_code": "IS 694:2010",
-                "title": "PVC insulated cables for working voltages up to 1100V",
-                "score": 0.91,
-                "status": "active",
-                "snippet": "Flame Retardant Low Smoke (FRLS) copper conductor cables...",
-            }
-        ][:top_k],
+        "results": candidates[:top_k],
         "took_ms": 42,
     }
-
 
 def mock_recommendation(item_id: str, original_spec: str) -> dict:
     """Return a fixed mock recommendation, standing in for Dev 1's real rules engine output."""
