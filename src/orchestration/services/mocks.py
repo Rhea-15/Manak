@@ -1,8 +1,8 @@
 def mock_search(query: str, top_k: int = 5) -> dict:
-    """Return a fixed set of mock IS-standard search results for a given query.
+    """Return a mock search response containing a slice of static candidates.
 
-    Stands in for Dev 3's future hybrid search (bge-m3 + Qdrant + BM25 + RRF);
-    the return shape matches the real service's future contract.
+    The response echoes ``query``, slices candidates using ``top_k``, and
+    reports a fixed elapsed time.
     """
     candidates = [
         {

@@ -15,10 +15,11 @@ router = APIRouter(prefix="/api/v1", tags=["search"])
     },
 )
 def search(payload: SearchRequest) -> SearchResponse:
-    """Validate a search request, call the search service, and return matched IS standards.
+    """Return IS-standard matches for a non-blank search query.
 
-    Returns 400 if the query is empty or whitespace-only, 422 on schema
-    validation failure, and 500 if the underlying search service fails.
+    Raises:
+        HTTPException: With status 400 when the query is blank, or status 500
+            when the search service raises an exception.
     """
     if not payload.query.strip():
         raise HTTPException(status_code=400, detail="query cannot be empty or whitespace")
