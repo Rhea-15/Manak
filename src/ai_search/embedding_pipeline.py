@@ -3,7 +3,6 @@ Dev 3: Embedding Pipeline using bge-m3
 Converts text into dense vectors for semantic search
 """
 
-
 import logging
 from typing import overload
 
@@ -18,6 +17,7 @@ from typing import TypedDict
 class PageInput(TypedDict, total=False):
     page_number: int
     text: str
+
 
 class EmbeddedChunk(TypedDict):
     page_number: int
@@ -38,6 +38,7 @@ class EmbeddedStandard(TypedDict):
     title: str | None
     definition: str | None
     vector: list[float]
+
 
 class EmbeddingModel:
     """Wrapper around bge-m3 embedding model"""
@@ -145,15 +146,19 @@ class EmbeddingPipeline:
             vectors = self.embedder.encode([c["text"] for c in chunks])
 
             for i, (chunk, vector) in enumerate(zip(chunks, vectors)):
-                chunked_pages.append({
-                    "page_number": page_num,
-                    "chunk_index": i,
-                    "text": chunk["text"],
-                    "char_range": chunk["char_range"],
-                    "vector": vector,
-                })
+                chunked_pages.append(
+                    {
+                        "page_number": page_num,
+                        "chunk_index": i,
+                        "text": chunk["text"],
+                        "char_range": chunk["char_range"],
+                        "vector": vector,
+                    }
+                )
 
-        self.logger.info(f"Embedded {len(chunked_pages)} chunks across {len(pages)} pages")
+        self.logger.info(
+            f"Embedded {len(chunked_pages)} chunks across {len(pages)} pages"
+        )
         return chunked_pages
 
     def embed_standards(
@@ -178,12 +183,14 @@ class EmbeddingPipeline:
 
         result = []
         for std, vector in zip(standards, vectors):
-            result.append({
-                "code": std.get("code"),
-                "title": std.get("title"),
-                "definition": std.get("definition"),
-                "vector": vector,
-            })
+            result.append(
+                {
+                    "code": std.get("code"),
+                    "title": std.get("title"),
+                    "definition": std.get("definition"),
+                    "vector": vector,
+                }
+            )
 
         self.logger.info(f"Embedded {len(result)} standards")
         return result
@@ -202,8 +209,7 @@ class EmbeddingPipeline:
             List of {"name": str, "specification": str, "vector": [...]}
         """
         texts = [
-            f"{item.get('name', '')} {item.get('specification', '')}"
-            for item in items
+            f"{item.get('name', '')} {item.get('specification', '')}" for item in items
         ]
 
         vectors = self.embedder.encode(texts)
@@ -228,10 +234,12 @@ class EmbeddingPipeline:
         i = 0
         while i < len(text):
             chunk_text = text[i : i + chunk_size]
-            chunks.append({
-                "text": chunk_text.strip(),
-                "char_range": (i, i + len(chunk_text)),
-            })
+            chunks.append(
+                {
+                    "text": chunk_text.strip(),
+                    "char_range": (i, i + len(chunk_text)),
+                }
+            )
             if i + chunk_size >= len(text):
                 break
             i += step

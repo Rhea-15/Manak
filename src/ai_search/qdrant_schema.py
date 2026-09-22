@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class QdrantConfig:
     """Configuration for Qdrant instance"""
+
     host: str = "localhost"
     port: int = 6333
     collection_name: str = "indian_standards"
@@ -57,8 +58,13 @@ class QdrantSchemaManager:
         """
         try:
             collections = self.client.get_collections()
-            if any(col.name == self.config.collection_name for col in collections.collections):
-                self.logger.warning(f"Collection '{self.config.collection_name}' already exists")
+            if any(
+                col.name == self.config.collection_name
+                for col in collections.collections
+            ):
+                self.logger.warning(
+                    f"Collection '{self.config.collection_name}' already exists"
+                )
                 return False
 
             self.client.create_collection(
@@ -221,13 +227,15 @@ class QdrantSchemaManager:
                 )
 
                 points, next_offset = results
-                all_points.extend([
-                    {
-                        "id": point.id,
-                        "payload": point.payload,
-                    }
-                    for point in points
-                ])
+                all_points.extend(
+                    [
+                        {
+                            "id": point.id,
+                            "payload": point.payload,
+                        }
+                        for point in points
+                    ]
+                )
 
                 if next_offset is None:
                     break

@@ -16,7 +16,7 @@ class TestQdrantConfig:
     def test_default_config(self):
         """Test default configuration values"""
         config = QdrantConfig()
-        
+
         assert config.host == "localhost"
         assert config.port == 6333
         assert config.collection_name == "indian_standards"
@@ -29,7 +29,7 @@ class TestQdrantConfig:
             port=6334,
             collection_name="custom_collection",
         )
-        
+
         assert config.host == "qdrant.example.com"
         assert config.port == 6334
         assert config.collection_name == "custom_collection"
@@ -43,7 +43,7 @@ class TestQdrantSchemaManager:
         """Test manager initialization"""
         config = QdrantConfig()
         manager = QdrantSchemaManager(config)
-        
+
         assert manager.config == config
         assert manager.client is not None
 
@@ -52,16 +52,16 @@ class TestQdrantSchemaManager:
         """Test vector insertion"""
         config = QdrantConfig()
         manager = QdrantSchemaManager(config)
-        
+
         # Mock the upsert method
         manager.client.upsert = MagicMock(return_value=True)
-        
+
         result = manager.insert_vector(
             point_id=1,
             vector=[0.1, 0.2, 0.3],
             payload={"standard_code": "IS 1554"},
         )
-        
+
         assert result is True
         manager.client.upsert.assert_called_once()
 
@@ -70,9 +70,9 @@ class TestQdrantSchemaManager:
         """Test batch vector insertion"""
         config = QdrantConfig()
         manager = QdrantSchemaManager(config)
-        
+
         manager.client.upsert = MagicMock(return_value=True)
-        
+
         points = [
             {
                 "id": 1,
@@ -85,8 +85,8 @@ class TestQdrantSchemaManager:
                 "payload": {"code": "IS 694"},
             },
         ]
-        
+
         count = manager.batch_insert_vectors(points)
-        
+
         assert count == 2
         manager.client.upsert.assert_called_once()
