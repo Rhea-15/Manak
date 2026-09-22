@@ -1,4 +1,9 @@
 def mock_search(query: str, top_k: int = 5) -> dict:
+    """Return a fixed set of mock IS-standard search results for a given query.
+
+    Stands in for Dev 3's future hybrid search (bge-m3 + Qdrant + BM25 + RRF);
+    the return shape matches the real service's future contract.
+    """
     candidates = [
         {
             "is_code": "IS 694:2010",
