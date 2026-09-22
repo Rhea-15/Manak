@@ -1,16 +1,16 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
     Integer,
     String,
     Text,
-    Date,
-    DateTime,
-    Boolean,
-    ForeignKey,
     UniqueConstraint,
-    Index,
 )
 
 from src.backend.database import Base
@@ -31,11 +31,7 @@ class StandardVersion(Base):
     __tablename__ = "standard_versions"
 
     id = Column(Integer, primary_key=True)
-    standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     version_number = Column(String(50), nullable=False)
     effective_date = Column(Date, nullable=True)
     status = Column(String(50), nullable=False)
@@ -47,11 +43,7 @@ class Amendment(Base):
     __tablename__ = "amendments"
 
     id = Column(Integer, primary_key=True)
-    standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     amendment_number = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     amendment_date = Column(Date, nullable=True)
@@ -63,11 +55,7 @@ class CertificationRule(Base):
     __tablename__ = "certification_rules"
 
     id = Column(Integer, primary_key=True)
-    standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     rule_type = Column(String(100), nullable=False)
     rule_name = Column(String(255), nullable=False)
     rule_description = Column(Text, nullable=True)
@@ -118,18 +106,10 @@ class QCORequirement(Base):
     __tablename__ = "qco_requirements"
 
     id = Column(Integer, primary_key=True)
-    standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     qco_reference = Column(String(300), nullable=True)
     requirement_text = Column(Text, nullable=True)
-    source_id = Column(
-        Integer,
-        ForeignKey("data_sources.id"),
-        nullable=True
-    )
+    source_id = Column(Integer, ForeignKey("data_sources.id"), nullable=True)
     effective_from = Column(Date, nullable=True)
     effective_to = Column(Date, nullable=True)
     verified = Column(Boolean, default=False, nullable=False)
@@ -141,18 +121,10 @@ class ISIRequirement(Base):
     __tablename__ = "isi_requirements"
 
     id = Column(Integer, primary_key=True)
-    standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     requirement_name = Column(String(300), nullable=True)
     requirement_text = Column(Text, nullable=True)
-    source_id = Column(
-        Integer,
-        ForeignKey("data_sources.id"),
-        nullable=True
-    )
+    source_id = Column(Integer, ForeignKey("data_sources.id"), nullable=True)
     effective_from = Column(Date, nullable=True)
     effective_to = Column(Date, nullable=True)
     verified = Column(Boolean, default=False, nullable=False)
@@ -164,18 +136,10 @@ class CRSRequirement(Base):
     __tablename__ = "crs_requirements"
 
     id = Column(Integer, primary_key=True)
-    standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     requirement_name = Column(String(300), nullable=True)
     requirement_text = Column(Text, nullable=True)
-    source_id = Column(
-        Integer,
-        ForeignKey("data_sources.id"),
-        nullable=True
-    )
+    source_id = Column(Integer, ForeignKey("data_sources.id"), nullable=True)
     effective_from = Column(Date, nullable=True)
     effective_to = Column(Date, nullable=True)
     verified = Column(Boolean, default=False, nullable=False)
@@ -187,18 +151,10 @@ class HallmarkingRequirement(Base):
     __tablename__ = "hallmarking_requirements"
 
     id = Column(Integer, primary_key=True)
-    standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     requirement_name = Column(String(300), nullable=True)
     requirement_text = Column(Text, nullable=True)
-    source_id = Column(
-        Integer,
-        ForeignKey("data_sources.id"),
-        nullable=True
-    )
+    source_id = Column(Integer, ForeignKey("data_sources.id"), nullable=True)
     effective_from = Column(Date, nullable=True)
     effective_to = Column(Date, nullable=True)
     verified = Column(Boolean, default=False, nullable=False)
@@ -210,22 +166,10 @@ class StandardRelationship(Base):
     __tablename__ = "standard_relationships"
 
     id = Column(Integer, primary_key=True)
-    source_standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
-    target_standard_id = Column(
-        Integer,
-        ForeignKey("standards.id"),
-        nullable=False
-    )
+    source_standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
+    target_standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
     relationship_type = Column(String(100), nullable=False)
-    source_id = Column(
-        Integer,
-        ForeignKey("data_sources.id"),
-        nullable=True
-    )
+    source_id = Column(Integer, ForeignKey("data_sources.id"), nullable=True)
     verified = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -234,18 +178,9 @@ class StandardRelationship(Base):
             "source_standard_id",
             "target_standard_id",
             "relationship_type",
-            name="uq_standard_relationship"
+            name="uq_standard_relationship",
         ),
-        Index(
-            "ix_standard_relationship_source",
-            "source_standard_id"
-        ),
-        Index(
-            "ix_standard_relationship_target",
-            "target_standard_id"
-        ),
-        Index(
-            "ix_standard_relationship_verified",
-            "verified"
-        ),
+        Index("ix_standard_relationship_source", "source_standard_id"),
+        Index("ix_standard_relationship_target", "target_standard_id"),
+        Index("ix_standard_relationship_verified", "verified"),
     )

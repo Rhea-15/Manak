@@ -17,10 +17,7 @@ def get_standard_graph(standard_number: str):
     """
 
     with driver.session() as session:
-        result = session.run(
-            query,
-            standard_number=standard_number
-        )
+        result = session.run(query, standard_number=standard_number)
 
         record = result.single()
 
@@ -28,7 +25,7 @@ def get_standard_graph(standard_number: str):
             return {
                 "found": False,
                 "standard_number": standard_number,
-                "linked_standards": []
+                "linked_standards": [],
             }
 
         linked_standards = [
@@ -41,5 +38,5 @@ def get_standard_graph(standard_number: str):
             "found": True,
             "standard_number": record["standard_number"],
             "title": record["title"],
-            "linked_standards": linked_standards
+            "linked_standards": linked_standards,
         }

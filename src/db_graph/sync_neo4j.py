@@ -1,11 +1,11 @@
+from neo4j import GraphDatabase
+
 from src.backend.database import SessionLocal
 from src.db_graph.models import (
     Standard,
-    StandardVersion,
     StandardRelationship,
+    StandardVersion,
 )
-from neo4j import GraphDatabase
-
 
 NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
@@ -13,10 +13,7 @@ NEO4J_PASSWORD = "manak_password"
 
 
 def get_driver():
-    return GraphDatabase.driver(
-        NEO4J_URI,
-        auth=(NEO4J_USER, NEO4J_PASSWORD)
-    )
+    return GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 
 def _is_session_like(obj):
@@ -32,10 +29,7 @@ def cleanup_removed_standards(tx, postgres_standard_numbers):
     """
 
     if _is_session_like(tx):
-        result = tx.run(
-            query,
-            standard_numbers=postgres_standard_numbers
-        )
+        result = tx.run(query, standard_numbers=postgres_standard_numbers)
 
         record = result.single()
 
@@ -44,14 +38,11 @@ def cleanup_removed_standards(tx, postgres_standard_numbers):
 
         try:
             return record["deleted"]
-        except Exception:
+        except (KeyError, IndexError, TypeError):
             return 0
 
     with tx.session() as session:
-        result = session.run(
-            query,
-            standard_numbers=postgres_standard_numbers
-        )
+        result = session.run(query, standard_numbers=postgres_standard_numbers)
 
         record = result.single()
 
@@ -70,11 +61,7 @@ def cleanup_stale_relationships(tx, relationships):
         relationship_type = relationship[2]
 
         relationship_keys.append(
-            source
-            + "||"
-            + relationship_type.upper()
-            + "||"
-            + target
+            source + "||" + relationship_type.upper() + "||" + target
         )
 
     query = """
@@ -94,10 +81,7 @@ def cleanup_stale_relationships(tx, relationships):
     """
 
     if _is_session_like(tx):
-        result = tx.run(
-            query,
-            relationships=relationship_keys
-        )
+        result = tx.run(query, relationships=relationship_keys)
 
         record = result.single()
 
@@ -106,14 +90,11 @@ def cleanup_stale_relationships(tx, relationships):
 
         try:
             return record["deleted"]
-        except Exception:
+        except (KeyError, IndexError, TypeError):
             return 0
 
     with tx.session() as session:
-        result = session.run(
-            query,
-            relationships=relationship_keys
-        )
+        result = session.run(query, relationships=relationship_keys)
 
         record = result.single()
 
@@ -185,17 +166,9 @@ def sync_version(tx, version, standard_number=None):
         )
 
         status = actual_version.status
-        document_path = getattr(
-            actual_version,
-            "document_path",
-            None
-        )
+        document_path = getattr(actual_version, "document_path", None)
 
-        postgres_id = getattr(
-            actual_version,
-            "id",
-            None
-        )
+        postgres_id = getattr(actual_version, "id", None)
 
     else:
         actual_standard_number = standard_number
@@ -203,24 +176,14 @@ def sync_version(tx, version, standard_number=None):
         version_number = version.version_number
 
         effective_date = (
-            version.effective_date.isoformat()
-            if version.effective_date
-            else None
+            version.effective_date.isoformat() if version.effective_date else None
         )
 
         status = version.status
 
-        document_path = getattr(
-            version,
-            "document_path",
-            None
-        )
+        document_path = getattr(version, "document_path", None)
 
-        postgres_id = getattr(
-            version,
-            "id",
-            None
-        )
+        postgres_id = getattr(version, "id", None)
 
     query = """
         MERGE (s:Standard {
@@ -258,16 +221,9 @@ def sync_version(tx, version, standard_number=None):
         session.run(query, **parameters)
 
 
-def sync_relationship(
-    tx,
-    source_standard,
-    target_standard,
-    relationship_type
-):
+def sync_relationship(tx, source_standard, target_standard, relationship_type):
     safe_relationship_type = "".join(
-        character
-        if character.isalnum() or character == "_"
-        else "_"
+        character if character.isalnum() or character == "_" else "_"
         for character in relationship_type.upper()
     )
 
@@ -298,21 +254,14 @@ def sync_relationship(
         session.run(query, **parameters)
 
 
-def sync_relationship_model(
-    tx,
-    relationship,
-    source_standard,
-    target_standard
-):
+def sync_relationship_model(tx, relationship, source_standard, target_standard):
     relationship_type = relationship.relationship_type
 
     if not relationship_type:
         return False
 
     safe_relationship_type = "".join(
-        character
-        if character.isalnum() or character == "_"
-        else "_"
+        character if character.isalnum() or character == "_" else "_"
         for character in relationship_type.upper()
     )
 
@@ -351,31 +300,22 @@ def sync_relationship_model(
 def get_postgres_relationships(db):
     relationships = (
         db.query(StandardRelationship)
-        .filter(
-            StandardRelationship.verified == True
-        )
+        .filter(StandardRelationship.verified == True)
         .all()
     )
 
     postgres_relationships = []
 
     for relationship in relationships:
-
         source_standard = (
             db.query(Standard)
-            .filter(
-                Standard.id
-                == relationship.source_standard_id
-            )
+            .filter(Standard.id == relationship.source_standard_id)
             .first()
         )
 
         target_standard = (
             db.query(Standard)
-            .filter(
-                Standard.id
-                == relationship.target_standard_id
-            )
+            .filter(Standard.id == relationship.target_standard_id)
             .first()
         )
 
@@ -400,89 +340,48 @@ def sync_database():
     try:
         standards = db.query(Standard).all()
 
-        standard_numbers = [
-            standard.standard_number
-            for standard in standards
-        ]
+        standard_numbers = [standard.standard_number for standard in standards]
 
-        removed_standards = cleanup_removed_standards(
-            driver,
-            standard_numbers
-        )
+        removed_standards = cleanup_removed_standards(driver, standard_numbers)
 
-        print(
-            f"Removed stale standards: "
-            f"{removed_standards}"
-        )
+        print(f"Removed stale standards: {removed_standards}")
 
         with driver.session() as session:
-
             for standard in standards:
-
-                sync_standard(
-                    session,
-                    standard
-                )
+                sync_standard(session, standard)
 
                 versions = (
                     db.query(StandardVersion)
-                    .filter(
-                        StandardVersion.standard_id
-                        == standard.id
-                    )
+                    .filter(StandardVersion.standard_id == standard.id)
                     .all()
                 )
 
                 for version in versions:
+                    sync_version(session, version, standard.standard_number)
 
-                    sync_version(
-                        session,
-                        version,
-                        standard.standard_number
-                    )
+        print(f"Standards synchronized: {len(standards)}")
 
-        print(
-            f"Standards synchronized: "
-            f"{len(standards)}"
+        relationships, postgres_relationships = get_postgres_relationships(db)
+
+        removed_relationships = cleanup_stale_relationships(
+            driver, postgres_relationships
         )
 
-        relationships, postgres_relationships = (
-            get_postgres_relationships(db)
-        )
-
-        removed_relationships = (
-            cleanup_stale_relationships(
-                driver,
-                postgres_relationships
-            )
-        )
-
-        print(
-            f"Removed stale relationships: "
-            f"{removed_relationships}"
-        )
+        print(f"Removed stale relationships: {removed_relationships}")
 
         synced_relationships = 0
 
         with driver.session() as session:
-
             for relationship in relationships:
-
                 source_standard = (
                     db.query(Standard)
-                    .filter(
-                        Standard.id
-                        == relationship.source_standard_id
-                    )
+                    .filter(Standard.id == relationship.source_standard_id)
                     .first()
                 )
 
                 target_standard = (
                     db.query(Standard)
-                    .filter(
-                        Standard.id
-                        == relationship.target_standard_id
-                    )
+                    .filter(Standard.id == relationship.target_standard_id)
                     .first()
                 )
 
@@ -490,19 +389,13 @@ def sync_database():
                     continue
 
                 synced = sync_relationship_model(
-                    session,
-                    relationship,
-                    source_standard,
-                    target_standard
+                    session, relationship, source_standard, target_standard
                 )
 
                 if synced:
                     synced_relationships += 1
 
-        print(
-            f"Verified relationships synchronized: "
-            f"{synced_relationships}"
-        )
+        print(f"Verified relationships synchronized: {synced_relationships}")
 
         return True
 
@@ -515,9 +408,7 @@ def main():
     result = sync_database()
 
     if result:
-        print(
-            "Neo4j synchronization completed."
-        )
+        print("Neo4j synchronization completed.")
 
 
 if __name__ == "__main__":

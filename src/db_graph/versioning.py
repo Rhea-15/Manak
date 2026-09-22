@@ -1,4 +1,5 @@
 from datetime import date
+
 from sqlalchemy.orm import Session
 
 from src.db_graph.models import Standard, StandardVersion
@@ -18,17 +19,14 @@ def get_active_version(db: Session, standard_id: int):
         db.query(StandardVersion)
         .filter(
             StandardVersion.standard_id == standard_id,
-            StandardVersion.status == "active"
+            StandardVersion.status == "active",
         )
         .first()
     )
 
 
 def create_new_version(
-    db: Session,
-    standard_id: int,
-    version_number: str,
-    effective_date: date
+    db: Session, standard_id: int, version_number: str, effective_date: date
 ):
     old_version = get_active_version(db, standard_id)
 
@@ -39,7 +37,7 @@ def create_new_version(
         standard_id=standard_id,
         version_number=version_number,
         effective_date=effective_date,
-        status="active"
+        status="active",
     )
 
     db.add(new_version)
@@ -50,17 +48,10 @@ def create_new_version(
 
 
 def validate_standard_status(db: Session, standard_id: int):
-    standard = (
-        db.query(Standard)
-        .filter(Standard.id == standard_id)
-        .first()
-    )
+    standard = db.query(Standard).filter(Standard.id == standard_id).first()
 
     if not standard:
-        return {
-            "valid": False,
-            "status": "not_found"
-        }
+        return {"valid": False, "status": "not_found"}
 
     active_version = get_active_version(db, standard_id)
 
@@ -70,12 +61,12 @@ def validate_standard_status(db: Session, standard_id: int):
             "standard_id": standard.id,
             "standard_number": standard.standard_number,
             "status": "active",
-            "active_version": active_version.version_number
+            "active_version": active_version.version_number,
         }
 
     return {
         "valid": False,
         "standard_id": standard.id,
         "standard_number": standard.standard_number,
-        "status": "no_active_version"
+        "status": "no_active_version",
     }

@@ -9,6 +9,6 @@ def build_graph_payload(standard_number: str):
             "found": graph.get("found", False),
             "standard_number": graph.get("standard_number"),
             "title": graph.get("title"),
-            "linked_standards": graph.get("linked_standards", [])
+            "linked_standards": graph.get("linked_standards", []),
         }
     }

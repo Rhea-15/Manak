@@ -1,17 +1,12 @@
 import csv
 import hashlib
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
 
 from src.backend.database import SessionLocal
-from src.db_graph.models import Standard, StandardVersion, DataSource
+from src.db_graph.models import DataSource, Standard, StandardVersion
 
-
-DATA_FILE = (
-    Path(__file__).resolve().parent
-    / "data"
-    / "standards_import.csv"
-)
+DATA_FILE = Path(__file__).resolve().parent / "data" / "standards_import.csv"
 
 
 REQUIRED_COLUMNS = {
@@ -78,32 +73,19 @@ def normalize_boolean(value):
 
 def read_csv():
     if not DATA_FILE.exists():
-        raise FileNotFoundError(
-            f"CSV file not found: {DATA_FILE}"
-        )
+        raise FileNotFoundError(f"CSV file not found: {DATA_FILE}")
 
-    with open(
-        DATA_FILE,
-        "r",
-        encoding="utf-8-sig",
-        newline=""
-    ) as file:
+    with open(DATA_FILE, "r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
 
         if reader.fieldnames is None:
-            raise ValueError(
-                "CSV file does not contain a header."
-            )
+            raise ValueError("CSV file does not contain a header.")
 
-        missing_columns = (
-            REQUIRED_COLUMNS
-            - set(reader.fieldnames)
-        )
+        missing_columns = REQUIRED_COLUMNS - set(reader.fieldnames)
 
         if missing_columns:
             raise ValueError(
-                "Missing CSV columns: "
-                + ", ".join(sorted(missing_columns))
+                "Missing CSV columns: " + ", ".join(sorted(missing_columns))
             )
 
         rows = list(reader)
@@ -117,98 +99,56 @@ def validate_rows(rows):
     seen_standard_numbers = set()
 
     for line_number, row in enumerate(rows, start=2):
+        standard_number = (row.get("standard_number") or "").strip()
 
-        standard_number = (
-            row.get("standard_number") or ""
-        ).strip()
+        title = (row.get("title") or "").strip()
 
-        title = (
-            row.get("title") or ""
-        ).strip()
+        status = (row.get("status") or "").strip().lower()
 
-        status = (
-            row.get("status") or ""
-        ).strip().lower()
+        source_name = (row.get("source_name") or "").strip()
 
-        source_name = (
-            row.get("source_name") or ""
-        ).strip()
+        source_url = (row.get("source_url") or "").strip()
 
-        source_url = (
-            row.get("source_url") or ""
-        ).strip()
+        version_number = (row.get("version_number") or "").strip()
 
-        version_number = (
-            row.get("version_number") or ""
-        ).strip()
+        effective_date = (row.get("effective_date") or "").strip()
 
-        effective_date = (
-            row.get("effective_date") or ""
-        ).strip()
-
-        authoritative = normalize_boolean(
-            row.get("authoritative")
-        )
+        authoritative = normalize_boolean(row.get("authoritative"))
 
         if not standard_number:
-            errors.append(
-                f"Line {line_number}: "
-                "standard_number is empty"
-            )
+            errors.append(f"Line {line_number}: standard_number is empty")
 
         if not title:
-            errors.append(
-                f"Line {line_number}: "
-                "title is empty"
-            )
+            errors.append(f"Line {line_number}: title is empty")
 
         if not status:
-            errors.append(
-                f"Line {line_number}: "
-                "status is empty"
-            )
+            errors.append(f"Line {line_number}: status is empty")
         elif status not in ALLOWED_STATUS:
-            errors.append(
-                f"Line {line_number}: "
-                f"invalid status '{status}'"
-            )
+            errors.append(f"Line {line_number}: invalid status '{status}'")
 
         if standard_number:
             if standard_number in seen_standard_numbers:
                 errors.append(
-                    f"Line {line_number}: "
-                    f"duplicate standard_number "
+                    f"Line {line_number}: duplicate standard_number "
                     f"'{standard_number}'"
                 )
 
-            seen_standard_numbers.add(
-                standard_number
-            )
+            seen_standard_numbers.add(standard_number)
 
         if source_name == "":
-            errors.append(
-                f"Line {line_number}: "
-                "source_name is empty"
-            )
+            errors.append(f"Line {line_number}: source_name is empty")
 
         if source_url == "":
-            errors.append(
-                f"Line {line_number}: "
-                "source_url is empty"
-            )
+            errors.append(f"Line {line_number}: source_url is empty")
 
-        if effective_date:
-            if parse_date(effective_date) is None:
-                errors.append(
-                    f"Line {line_number}: "
-                    f"invalid effective_date "
-                    f"'{effective_date}'"
-                )
+        if effective_date and parse_date(effective_date) is None:
+            errors.append(
+                f"Line {line_number}: invalid effective_date '{effective_date}'"
+            )
 
         if authoritative and not source_url:
             errors.append(
-                f"Line {line_number}: "
-                "authoritative source requires source_url"
+                f"Line {line_number}: authoritative source requires source_url"
             )
 
         if version_number:
@@ -220,46 +160,24 @@ def validate_rows(rows):
     return errors
 
 
-def get_existing_standard(
-    db,
-    standard_number
-):
+def get_existing_standard(db, standard_number):
     return (
-        db.query(Standard)
-        .filter(
-            Standard.standard_number
-            == standard_number
-        )
-        .first()
+        db.query(Standard).filter(Standard.standard_number == standard_number).first()
     )
 
 
-def get_existing_source(
-    db,
-    source_name,
-    source_url
-):
+def get_existing_source(db, source_name, source_url):
     return (
         db.query(DataSource)
         .filter(
-            DataSource.source_name == source_name,
-            DataSource.source_url == source_url
+            DataSource.source_name == source_name, DataSource.source_url == source_url
         )
         .first()
     )
 
 
-def create_data_source(
-    db,
-    source_name,
-    source_url,
-    authoritative
-):
-    source = get_existing_source(
-        db,
-        source_name,
-        source_url
-    )
+def create_data_source(db, source_name, source_url, authoritative):
+    source = get_existing_source(db, source_name, source_url)
 
     if source:
         return source
@@ -269,7 +187,7 @@ def create_data_source(
         source_url=source_url,
         source_type="GOVERNMENT",
         is_authoritative=authoritative,
-        source_hash=None
+        source_hash=None,
     )
 
     db.add(source)
@@ -278,48 +196,30 @@ def create_data_source(
     return source
 
 
-def create_standard(
-    db,
-    row,
-    source
-):
-    standard_number = (
-        row.get("standard_number") or ""
-    ).strip()
+def create_standard(db, row, source):
+    standard_number = (row.get("standard_number") or "").strip()
 
-    title = (
-        row.get("title") or ""
-    ).strip()
+    title = (row.get("title") or "").strip()
 
-    description = (
-        row.get("description") or ""
-    ).strip()
+    description = (row.get("description") or "").strip()
 
-    status = (
-        row.get("status") or ""
-    ).strip().lower()
+    status = (row.get("status") or "").strip().lower()
 
     standard = Standard(
         standard_number=standard_number,
         title=title,
         description=description,
-        status=status
+        status=status,
     )
 
     db.add(standard)
     db.flush()
 
-    version_number = (
-        row.get("version_number") or ""
-    ).strip()
+    version_number = (row.get("version_number") or "").strip()
 
-    effective_date_value = (
-        row.get("effective_date") or ""
-    ).strip()
+    effective_date_value = (row.get("effective_date") or "").strip()
 
-    parsed_effective_date = parse_date(
-        effective_date_value
-    )
+    parsed_effective_date = parse_date(effective_date_value)
 
     if version_number:
         version = StandardVersion(
@@ -327,7 +227,7 @@ def create_standard(
             version_number=version_number,
             effective_date=parsed_effective_date,
             status=status,
-            source_id=source.id
+            source_id=source.id,
         )
 
         db.add(version)
@@ -346,10 +246,7 @@ def seed_database():
     validation_errors = validate_rows(rows)
 
     if validation_errors:
-        print(
-            f"Validation errors: "
-            f"{len(validation_errors)}"
-        )
+        print(f"Validation errors: {len(validation_errors)}")
 
         for error in validation_errors:
             print(error)
@@ -369,54 +266,31 @@ def seed_database():
 
     try:
         for row in rows:
+            standard_number = (row.get("standard_number") or "").strip()
 
-            standard_number = (
-                row.get("standard_number") or ""
-            ).strip()
+            source_name = (row.get("source_name") or "").strip()
 
-            source_name = (
-                row.get("source_name") or ""
-            ).strip()
+            source_url = (row.get("source_url") or "").strip()
 
-            source_url = (
-                row.get("source_url") or ""
-            ).strip()
+            authoritative = normalize_boolean(row.get("authoritative"))
 
-            authoritative = normalize_boolean(
-                row.get("authoritative")
-            )
-
-            existing_standard = get_existing_standard(
-                db,
-                standard_number
-            )
+            existing_standard = get_existing_standard(db, standard_number)
 
             if existing_standard:
                 skipped_standards += 1
                 continue
 
-            existing_source = get_existing_source(
-                db,
-                source_name,
-                source_url
-            )
+            existing_source = get_existing_source(db, source_name, source_url)
 
             if existing_source:
                 source = existing_source
             else:
                 source = create_data_source(
-                    db,
-                    source_name,
-                    source_url,
-                    authoritative
+                    db, source_name, source_url, authoritative
                 )
                 inserted_sources += 1
 
-            standard = create_standard(
-                db,
-                row,
-                source
-            )
+            create_standard(db, row, source)
 
             inserted_standards += 1
 
@@ -425,33 +299,17 @@ def seed_database():
 
         db.commit()
 
-        print(
-            f"Inserted standards: "
-            f"{inserted_standards}"
-        )
+        print(f"Inserted standards: {inserted_standards}")
 
-        print(
-            f"Inserted versions: "
-            f"{inserted_versions}"
-        )
+        print(f"Inserted versions: {inserted_versions}")
 
-        print(
-            f"Inserted sources: "
-            f"{inserted_sources}"
-        )
+        print(f"Inserted sources: {inserted_sources}")
 
-        print(
-            f"Skipped existing standards: "
-            f"{skipped_standards}"
-        )
+        print(f"Skipped existing standards: {skipped_standards}")
 
-        print(
-            f"Source SHA-256: {file_hash}"
-        )
+        print(f"Source SHA-256: {file_hash}")
 
-        print(
-            "Import completed successfully."
-        )
+        print("Import completed successfully.")
 
         return True
 

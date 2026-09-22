@@ -15,10 +15,7 @@ def get_enforcer():
     global _enforcer
 
     if _enforcer is None:
-        _enforcer = casbin.Enforcer(
-            str(MODEL_PATH),
-            str(POLICY_PATH)
-        )
+        _enforcer = casbin.Enforcer(str(MODEL_PATH), str(POLICY_PATH))
 
     return _enforcer
 
@@ -26,13 +23,7 @@ def get_enforcer():
 def check_permission(role: str, path: str, method: str) -> bool:
     enforcer = get_enforcer()
 
-    return bool(
-        enforcer.enforce(
-            role.upper(),
-            path,
-            method.upper()
-        )
-    )
+    return bool(enforcer.enforce(role.upper(), path, method.upper()))
 
 
 def require_role(required_role: str):
@@ -41,23 +32,15 @@ def require_role(required_role: str):
 
         if not user_role:
             raise HTTPException(
-                status_code=401,
-                detail="X-User-Role header is required"
+                status_code=401, detail="X-User-Role header is required"
             )
 
         user_role = user_role.upper()
 
-        allowed = check_permission(
-            user_role,
-            request.url.path,
-            request.method
-        )
+        allowed = check_permission(user_role, request.url.path, request.method)
 
         if not allowed:
-            raise HTTPException(
-                status_code=403,
-                detail="Access denied"
-            )
+            raise HTTPException(status_code=403, detail="Access denied")
 
         return user_role
 
