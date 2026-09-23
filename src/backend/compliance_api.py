@@ -7,7 +7,6 @@ from src.backend.rbac import require_role
 
 router = APIRouter(prefix="/compliance", tags=["Compliance"])
 
-
 @router.get("/{standard_id}")
 def get_compliance_status(
     standard_id: int,
