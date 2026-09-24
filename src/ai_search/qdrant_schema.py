@@ -4,7 +4,7 @@ Initializes collections and manages vector embeddings for hybrid search
 """
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from qdrant_client import QdrantClient
@@ -17,18 +17,21 @@ from qdrant_client.http.models import (
     VectorParams,
 )
 
+from src.ai_search.config import settings
+
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class QdrantConfig:
-    """Configuration for Qdrant instance"""
+    """Configuration for Qdrant instance — defaults come from env vars via config.py"""
 
-    host: str = "localhost"
-    port: int = 6333
-    collection_name: str = "indian_standards"
-    vector_size: int = 1024  # bge-m3 embedding dimension
+    host: str = field(default_factory=lambda: settings.qdrant_host)
+    port: int = field(default_factory=lambda: settings.qdrant_port)
+    collection_name: str = field(default_factory=lambda: settings.qdrant_collection)
+    vector_size: int = field(default_factory=lambda: settings.embedding_vector_size)
     distance_metric: Distance = Distance.COSINE
+    api_key: str | None = field(default_factory=lambda: settings.qdrant_api_key)
 
 
 class QdrantSchemaManager:
@@ -40,6 +43,7 @@ class QdrantSchemaManager:
         self.client = QdrantClient(
             host=config.host,
             port=config.port,
+            api_key=config.api_key,
             prefer_grpc=False,
         )
         self.logger.info(f"Connected to Qdrant at {config.host}:{config.port}")

@@ -15,6 +15,8 @@ import numpy as np
 import spacy
 from PIL import Image
 
+from src.ai_search.config import settings
+
 try:
     from paddleocr import PaddleOCR
 except ImportError:
@@ -258,7 +260,7 @@ class BOQExtractor:
 class SpacyNERProcessor:
     """Process text through spaCy NER for entity extraction"""
 
-    def __init__(self, model_name: str = "en_core_web_sm"):
+    def __init__(self, model_name: str = settings.spacy_model):
         self.logger = logging.getLogger(__name__)
         try:
             self.nlp = spacy.load(model_name)
@@ -342,7 +344,7 @@ class DocumentParser:
             self.ner_processor = None
 
     def parse(
-        self, file_path: str, max_file_size_mb: int = 100
+        self, file_path: str, max_file_size_mb: int = settings.max_upload_file_size_mb
     ) -> DocumentExtractionResult:
         """Main entry point: parse any supported document"""
         file_path = str(file_path)

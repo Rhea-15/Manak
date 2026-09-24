@@ -5,7 +5,7 @@ Converts text into dense vectors for semantic search
 
 import logging
 from typing import overload
-
+from src.ai_search.config import settings
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
@@ -43,7 +43,7 @@ class EmbeddedStandard(TypedDict):
 class EmbeddingModel:
     """Wrapper around bge-m3 embedding model"""
 
-    def __init__(self, model_name: str = "BAAI/bge-m3"):
+    def __init__(self, model_name: str = settings.embedding_model):
         """
         Initialize embedding model.
 
@@ -114,7 +114,7 @@ class EmbeddingModel:
 class EmbeddingPipeline:
     """Orchestrate text extraction → embedding → storage"""
 
-    def __init__(self, embedding_model_name: str = "BAAI/bge-m3"):
+    def __init__(self, embedding_model_name: str = settings.embedding_model):
         self.logger = logging.getLogger(__name__)
         self.embedder = EmbeddingModel(embedding_model_name)
         self.embedding_dim = self.embedder.get_embedding_dimension()
@@ -123,7 +123,7 @@ class EmbeddingPipeline:
     def embed_document_pages(
         self,
         pages: list[PageInput],
-        chunk_size: int = 500,
+        chunk_size: int = settings.chunk_size,
     ) -> list[EmbeddedChunk]:
         """
         Embed document pages, chunking long texts.
@@ -221,12 +221,18 @@ class EmbeddingPipeline:
         return result
 
     @staticmethod
-    def _chunk_text(text: str, chunk_size: int = 500, overlap: int = 100) -> list[dict]:
+    def _chunk_text(
+        text: str, 
+        chunk_size: int = settings.chunk_size, 
+        overlap: int = settings.chunk_overlap
+    ) -> list[dict]:
         """Split text into overlapping chunks with validation"""
         if chunk_size <= 0:
             raise ValueError(f"chunk_size must be positive, got {chunk_size}")
         if overlap >= chunk_size:
             raise ValueError(f"overlap ({overlap}) must be < chunk_size ({chunk_size})")
+        if not text or not text.strip():
+            return []
 
         chunks = []
         step = chunk_size - overlap

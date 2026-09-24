@@ -2,7 +2,7 @@
 Dev 3: IndicTrans2 Multilingual Translation
 Supports translating regional Indian language queries to English
 """
-
+from src.ai_search.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ SUPPORTED_LANGUAGES = {
 class IndicTrans2Translator:
     """Wrapper around IndicTrans2 model for Indian language translation"""
 
-    def __init__(self, model_name: str = "ai4bharat/indic-trans-v2-all-gpu"):
+    def __init__(self, model_name: str = settings.indictrans2_model):
         """
         Initialize IndicTrans2 model.
         

@@ -6,6 +6,7 @@ Provides exact keyword matching complementary to dense vectors
 import json
 import logging
 from typing import Any, TypedDict
+from src.ai_search.config import settings
 
 try:
     from rank_bm25 import BM25Plus
@@ -22,7 +23,7 @@ class BM25Document(TypedDict):
 class BM25Indexer:
     """BM25 lexical search implementation for exact keyword matching"""
 
-    def __init__(self, k1: float = 1.5, b: float = 0.75):
+    def __init__(self, k1: float = settings.bm25_k1, b: float = settings.bm25_b):
         """
         Initialize BM25 indexer using BM25Plus to ensure positive IDF scores.
         
@@ -96,11 +97,6 @@ class BM25Indexer:
         
         tokenized_query = self._tokenize(query)
         scores = self.bm25_model.get_scores(tokenized_query)
-        
-        # Debug: print scores with doc info
-        for i, score in enumerate(scores):
-            doc_id = self.doc_metadata[i]["id"]
-            print(f"Doc {doc_id}: score={score}, text={self.doc_metadata[i]['text_preview']}")
         
         # Primary sort: BM25 score (descending)
         # Secondary sort: original insertion order (ascending = earlier docs first)
