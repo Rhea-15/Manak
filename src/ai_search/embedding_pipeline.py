@@ -50,7 +50,10 @@ class EmbeddingModel:
         Initialize embedding model.
 
         Args:
-            model_name: Hugging Face model name (default: bge-m3 multilingual)
+            model_name: Hugging Face model name; defaults to the configured
+                EMBEDDING_MODEL.
+
+        Model loading errors propagate to callers.
         """
         self.logger = logging.getLogger(__name__)
         self.model_name = model_name
@@ -117,6 +120,14 @@ class EmbeddingPipeline:
     """Orchestrate text extraction → embedding → storage"""
 
     def __init__(self, embedding_model_name: str = settings.embedding_model):
+        """Load an embedding model and expose its vector dimension.
+
+        Args:
+            embedding_model_name: Model name; defaults to the configured
+                EMBEDDING_MODEL.
+
+        Model loading errors propagate to callers.
+        """
         self.logger = logging.getLogger(__name__)
         self.embedder = EmbeddingModel(embedding_model_name)
         self.embedding_dim = self.embedder.get_embedding_dimension()
@@ -132,10 +143,18 @@ class EmbeddingPipeline:
 
         Args:
             pages: List of {"page_number": int, "text": str, ...}
-            chunk_size: Max characters per chunk
+            chunk_size: Maximum characters per chunk; must be positive and
+                greater than the configured overlap.
 
         Returns:
-            List of {"page_number": int, "chunk_index": int, "text": str, "vector": [...]}
+            Chunks with page number, index, text, original half-open character
+            range, and vector.
+
+        Raises:
+            ValueError: If chunk_size is nonpositive or no larger than the
+                configured overlap.
+
+        Embedding errors propagate to callers.
         """
         chunked_pages = []
 
@@ -228,7 +247,25 @@ class EmbeddingPipeline:
         chunk_size: int = settings.chunk_size, 
         overlap: int = settings.chunk_overlap
     ) -> list[dict]:
-        """Split text into overlapping chunks with validation"""
+        """Split nonblank text into character chunks with original offsets.
+
+        Chunk text is stripped, but char_range uses half-open offsets in the
+        input. Empty or whitespace-only text returns an empty list after size
+        validation.
+
+        Args:
+            text: Text to split.
+            chunk_size: Maximum characters in each chunk.
+            overlap: Characters shared by adjacent chunks; a negative value
+                skips characters between chunks.
+
+        Returns:
+            Dictionaries containing stripped text and its original char_range.
+
+        Raises:
+            ValueError: If chunk_size is nonpositive or overlap is at least
+                chunk_size, including for blank text.
+        """
         if chunk_size <= 0:
             raise ValueError(f"chunk_size must be positive, got {chunk_size}")
         if overlap >= chunk_size:

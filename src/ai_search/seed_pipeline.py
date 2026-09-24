@@ -20,14 +20,15 @@ logger = logging.getLogger(__name__)
 
 def _fetch_seeded_standards() -> list[dict]:
     """
-    Read Dev 2's `standards` table and adapt field names to what
-    EmbeddingPipeline.embed_standards expects (code/title/definition).
+    Read standards from the database for embedding and indexing.
 
-    Only a missing DB integration is treated as "nothing to do yet" (so this
-    script can still be smoke-tested standalone before Dev 1/2's pieces are
-    wired in). A failure while actually querying the database — bad
-    connection, missing table, etc. — is a real error and is left to
-    propagate rather than being reported as an empty, successful run.
+    Returns dictionaries with id, code, title, and definition; a missing
+    description becomes an empty string. An ImportError while importing the
+    database or model modules returns an empty list. Database session and
+    query errors propagate.
+
+    Raises:
+        ValueError: If a fetched standard has no primary key ID.
     """
     try:
         from src.backend.database import SessionLocal
@@ -65,7 +66,25 @@ def _fetch_seeded_standards() -> list[dict]:
 
 
 def run(standards: list[dict] | None = None) -> dict:
-    """Extract entities, embed, and index a batch of standards end-to-end."""
+    """Embed standards, index them in Qdrant, and build a BM25 index.
+
+    Args:
+        standards: Rows with an ID and standard fields; None fetches rows from
+            the database. An empty list returns without indexing.
+
+    Returns:
+        A processed count alone for an empty batch. Otherwise, returns the
+        processed and inserted counts, BM25 statistics, index path, and whether
+        the BM25 index was saved. A save failure is reported as False after
+        Qdrant indexing rather than raised.
+
+    Raises:
+        ValueError: If a standard has no ID.
+        RuntimeError: If Qdrant reports fewer or more inserts than points sent.
+
+    Database, model, and collection errors propagate. Indexing may have
+    modified Qdrant before a later error occurs.
+    """
     standards = standards if standards is not None else _fetch_seeded_standards()
     if not standards:
         logger.warning("No standards to seed — nothing to do.")

@@ -29,8 +29,11 @@ class BM25Indexer:
         Initialize BM25 indexer using BM25Plus to ensure positive IDF scores.
         
         Args:
-            k1: Controls term frequency saturation (default 1.5)
-            b: Controls length normalization (default 0.75)
+            k1: Controls term frequency saturation; defaults to the configured BM25_K1.
+            b: Controls length normalization; defaults to the configured BM25_B.
+
+        Raises:
+            RuntimeError: If rank_bm25 is not installed.
         """
         self.logger = logging.getLogger(__name__)
         if not BM25Plus:
@@ -87,7 +90,9 @@ class BM25Indexer:
             top_k: Number of top results to return
         
         Returns:
-            List of {"doc_id": int, "score": float, "text_preview": str, "metadata": {}}
+            List of {"doc_id": int, "score": float, "text_preview": str, "metadata": {}}.
+            Empty if top_k is nonpositive, the index is empty, or no document
+            contains a query term with a positive score.
         """
         if top_k <= 0:
             return []

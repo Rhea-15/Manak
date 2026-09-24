@@ -38,6 +38,10 @@ class QdrantSchemaManager:
     """Manage Qdrant collections and schema"""
 
     def __init__(self, config: QdrantConfig):
+        """Create a Qdrant client using the configured address and optional API key.
+
+        Errors from client construction propagate to callers.
+        """
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.client = QdrantClient(

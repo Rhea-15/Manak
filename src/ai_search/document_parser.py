@@ -261,6 +261,14 @@ class SpacyNERProcessor:
     """Process text through spaCy NER for entity extraction"""
 
     def __init__(self, model_name: str = settings.spacy_model):
+        """Load the configured spaCy model for entity extraction.
+
+        Args:
+            model_name: spaCy model to load; defaults to the configured SPACY_MODEL.
+
+        Raises:
+            OSError: If spaCy cannot load the model.
+        """
         self.logger = logging.getLogger(__name__)
         try:
             self.nlp = spacy.load(model_name)
@@ -346,7 +354,28 @@ class DocumentParser:
     def parse(
         self, file_path: str, max_file_size_mb: int = settings.max_upload_file_size_mb
     ) -> DocumentExtractionResult:
-        """Main entry point: parse any supported document"""
+        """Extract pages from a PDF, Excel workbook, or UTF-8 text file.
+
+        PDFs without extracted text and failed digital PDF reads are retried
+        with OCR. Entities are added when the spaCy model loaded successfully.
+
+        Args:
+            file_path: Path to a .pdf, .xls, .xlsx, or .txt file.
+            max_file_size_mb: Maximum size in MiB; files at the limit are
+                accepted. Defaults to the configured MAX_UPLOAD_FILE_SIZE_MB.
+
+        Returns:
+            Pages and metadata for the document. The language_detected field
+            is currently always "en".
+
+        Raises:
+            ValueError: If the file exceeds the limit or has an unsupported suffix.
+            OSError: If the file cannot be accessed.
+            RuntimeError: If OCR is needed but PaddleOCR is unavailable.
+            ImportError: If an Excel parsing dependency is unavailable.
+
+        OCR, Excel, and entity extraction errors otherwise propagate to callers.
+        """
         file_path = str(file_path)
         file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
         if file_size_mb > max_file_size_mb:

@@ -16,15 +16,26 @@ except ImportError:
 
 
 def _env_str(key: str, default: str) -> str:
+    """Return the environment value, including an empty string, or the default if unset."""
     return os.getenv(key, default)
 
 
 def _env_int(key: str, default: int) -> int:
+    """Return an integer environment value, or the default if unset.
+
+    Raises:
+        ValueError: If the set value cannot be parsed as an integer.
+    """
     val = os.getenv(key)
     return int(val) if val is not None else default
 
 
 def _env_float(key: str, default: float) -> float:
+    """Return a floating-point environment value, or the default if unset.
+
+    Raises:
+        ValueError: If the set value cannot be parsed as a float.
+    """
     val = os.getenv(key)
     return float(val) if val is not None else default
 
