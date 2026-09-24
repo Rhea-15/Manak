@@ -2,8 +2,9 @@
 Dev 3: IndicTrans2 Multilingual Translation
 Supports translating regional Indian language queries to English
 """
-
 import logging
+
+from src.ai_search.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +24,16 @@ SUPPORTED_LANGUAGES = {
 class IndicTrans2Translator:
     """Wrapper around IndicTrans2 model for Indian language translation"""
 
-    def __init__(self, model_name: str = "ai4bharat/indic-trans-v2-all-gpu"):
+    def __init__(self, model_name: str = settings.indictrans2_model):
         """
-        Initialize IndicTrans2 model.
+        Load the translation model, with mock translation as a fallback.
         
         Args:
-            model_name: HuggingFace model name (IndicTrans2 variants)
+            model_name: Hugging Face model name; defaults to the configured
+                INDICTRANS2_MODEL.
+
+        Import or model-loading OSError failures leave the model unset so
+        translation uses the mock fallback. Other loading errors propagate.
         """
         self.logger = logging.getLogger(__name__)
         self.model_name = model_name
