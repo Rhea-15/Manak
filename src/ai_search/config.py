@@ -50,6 +50,7 @@ class AISearchSettings:
     # BM25
     bm25_k1: float = field(default_factory=lambda: _env_float("BM25_K1", 1.5))
     bm25_b: float = field(default_factory=lambda: _env_float("BM25_B", 0.75))
+    bm25_index_path: str = field(default_factory=lambda: _env_str("BM25_INDEX_PATH", "data/bm25_index.json"))
 
     # RRF / hybrid search
     rrf_k: int = field(default_factory=lambda: _env_int("RRF_K", 60))
