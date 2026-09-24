@@ -6,6 +6,7 @@ Provides exact keyword matching complementary to dense vectors
 import json
 import logging
 from typing import Any, TypedDict
+
 from src.ai_search.config import settings
 
 try:

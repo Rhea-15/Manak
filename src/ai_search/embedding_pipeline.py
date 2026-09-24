@@ -5,9 +5,11 @@ Converts text into dense vectors for semantic search
 
 import logging
 from typing import overload
-from src.ai_search.config import settings
+
 import numpy as np
 from sentence_transformers import SentenceTransformer
+
+from src.ai_search.config import settings
 
 logger = logging.getLogger(__name__)
 

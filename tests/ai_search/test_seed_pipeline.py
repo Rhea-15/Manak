@@ -1,9 +1,7 @@
 """
 Dev 3: Tests for the Day 2 seed pipeline (end-to-end wiring).
 """
-from unittest.mock import MagicMock, patch
-
-import numpy as np
+from unittest.mock import patch
 
 
 @patch("src.ai_search.seed_pipeline.BM25Indexer")

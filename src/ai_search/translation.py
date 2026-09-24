@@ -2,8 +2,9 @@
 Dev 3: IndicTrans2 Multilingual Translation
 Supports translating regional Indian language queries to English
 """
-from src.ai_search.config import settings
 import logging
+
+from src.ai_search.config import settings
 
 logger = logging.getLogger(__name__)
 
