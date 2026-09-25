@@ -21,6 +21,12 @@ langdetect>=1.0.9
 fastapi>=0.115,<1.0
 uvicorn[standard]>=0.30,<1.0
 pydantic>=2.7,<3.0
+pandas>=2.2.0
+openpyxl>=3.1.0
+python-dotenv>=1.0.0
+
+# Authorization
+casbin==1.43.0
 
 # Authorization
 casbin==1.43.0
