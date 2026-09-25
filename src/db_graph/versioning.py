@@ -32,6 +32,7 @@ def create_new_version(
     effective_date: date,
     source_id: int | None = None,
 ):
+    """Create an active version and supersede the previous active version."""
     old_version = get_active_version(db, standard_id)
 
     if old_version:

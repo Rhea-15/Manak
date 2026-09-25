@@ -17,6 +17,7 @@ def create_audit_log(
     details: str,
     db: Session | None = None,
 ):
+    """Persist an audit entry, closing the session when this function opens it."""
     session = db or SessionLocal()
 
     try:
@@ -39,6 +40,7 @@ def create_audit_log(
 
 
 def get_audit_logs(db: Session):
+    """Return audit entries with the newest entries first."""
     return db.query(AuditLog).order_by(AuditLog.created_at.desc()).all()
 
 
@@ -47,6 +49,7 @@ def list_audit_logs(
     db: Session = Depends(get_db),  # noqa: B008
     role: str = require_role("ADMIN"),
 ):
+    """Return serialized audit entries to an administrator."""
     logs = get_audit_logs(db)
 
     return [

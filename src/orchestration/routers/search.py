@@ -8,6 +8,7 @@ router = APIRouter(prefix="/api/v1", tags=["search"])
 
 @router.post("/search")
 def search(payload: SearchRequest) -> dict:
+    """Return standard search results for the requested query and result limit."""
     return search_standards(
         query=payload.query,
         top_k=payload.top_k,

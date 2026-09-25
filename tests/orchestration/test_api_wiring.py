@@ -8,6 +8,7 @@ client = TestClient(app)
 
 
 def test_search_valid_request():
+    """A valid search request returns the mocked standard results."""
     mock_result = {
         "query": "fireproof wire",
         "results": [
@@ -136,7 +137,9 @@ def test_cors_headers_present():
     assert resp.headers.get("access-control-allow-origin") == "http://localhost:3000"
 
 def test_routes_registered():
+    """Define a nested helper for walking registered route paths."""
     def collect_paths(routes):
+        """Include paths from nested FastAPI routers."""
         paths = []
 
         for r in routes:

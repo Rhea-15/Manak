@@ -17,10 +17,12 @@ _CACHE_TTL_SECONDS = 60
 
 
 def run_with_timeout(func, *args, timeout_seconds: float = 2.0, fallback: Any = None, **kwargs):
+    """Run a callable in a daemon thread and return a fallback on timeout."""
     result = {}
     error = None
 
     def target():
+        """Capture the worker result or exception for the calling thread."""
         nonlocal error
 
         try:
@@ -44,6 +46,7 @@ def run_with_timeout(func, *args, timeout_seconds: float = 2.0, fallback: Any = 
 
 
 def get_search_dependencies():
+    """Initialize and reuse the embedding model and Qdrant manager."""
     global _embedding_model, _qdrant
 
     if _embedding_model is None:
@@ -56,6 +59,7 @@ def get_search_dependencies():
 
 
 def _empty_search_result(query: str, top_k: int = 5) -> dict:
+    """Build an empty search response when a lookup cannot complete."""
     return {
         "query": query,
         "results": [],
@@ -68,6 +72,7 @@ def _empty_search_result(query: str, top_k: int = 5) -> dict:
 
 
 def _search_standards_impl(query: str, top_k: int = 5) -> dict:
+    """Enrich vector matches with standard, compliance, and graph data."""
     embedding_model, qdrant = get_search_dependencies()
 
     query_vector = embedding_model.encode(query)
@@ -134,6 +139,7 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
 
 
 def search_standards(query: str, top_k: int = 5) -> dict:
+    """Return cached standard search results or run a bounded lookup."""
     cache_key = ("search_standards", query, top_k)
     now = time.monotonic()
 

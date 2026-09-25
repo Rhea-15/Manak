@@ -14,6 +14,7 @@ def get_review_queue(
     db: Session = Depends(get_db),  # noqa: B008
     role: str = require_role("MANAGER"),
 ):
+    """List review items for a manager, newest first."""
     items = db.query(ReviewQueue).order_by(ReviewQueue.created_at.desc()).all()
 
     return [
@@ -37,6 +38,7 @@ def approve_document(
     db: Session = Depends(get_db),  # noqa: B008
     role: str = require_role("MANAGER"),
 ):
+    """Approve a review item and record the action in the audit log."""
     item = db.query(ReviewQueue).filter(ReviewQueue.id == review_id).first()
 
     if not item:
@@ -68,6 +70,7 @@ def reject_document(
     db: Session = Depends(get_db),  # noqa: B008
     role: str = require_role("MANAGER"),
 ):
+    """Reject a review item and record the action in the audit log."""
     item = db.query(ReviewQueue).filter(ReviewQueue.id == review_id).first()
 
     if not item:

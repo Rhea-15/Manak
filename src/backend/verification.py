@@ -14,4 +14,5 @@ def verify_standard(
     db: Session = Depends(get_db),  # noqa: B008
     role: str = require_role("MANAGER"),
 ):
+    """Run compliance verification for a standard requested by a manager."""
     return verify_compliance_data(db, standard_id)

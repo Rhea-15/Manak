@@ -10,6 +10,7 @@ from src.db_graph.versioning import create_new_version, validate_standard_status
 
 
 def _make_session():
+    """Create an isolated SQLite session with the application schema."""
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine)
@@ -17,10 +18,12 @@ def _make_session():
 
 
 def test_standard_version_tracks_data_source():
+    """Standard versions expose a data source identifier column."""
     assert "source_id" in StandardVersion.__table__.columns
 
 
 def test_create_new_version_marks_previous_version_superseded():
+    """Creating a new version supersedes the previous active version."""
     session = _make_session()
     standard = Standard(
         standard_number="IS 1234",
@@ -45,6 +48,7 @@ def test_create_new_version_marks_previous_version_superseded():
 
 
 def test_compare_versions_reports_source_changes():
+    """Version comparisons include changes to the data source."""
     session = _make_session()
     source_old = DataSource(source_name="Old source", source_type="GOVERNMENT", source_url="https://old.example")
     source_new = DataSource(source_name="New source", source_type="GOVERNMENT", source_url="https://new.example")

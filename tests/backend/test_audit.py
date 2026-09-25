@@ -8,12 +8,14 @@ from src.backend.database import Base
 
 
 def _make_session():
+    """Create an isolated SQLite session with the application schema."""
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
     return sessionmaker(bind=engine)()
 
 
 def test_get_audit_logs_returns_entries():
+    """Audit entries can be retrieved after they are created."""
     session = _make_session()
 
     entry = create_audit_log(

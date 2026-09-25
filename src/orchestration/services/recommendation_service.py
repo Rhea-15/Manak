@@ -10,6 +10,7 @@ IS_PATTERN = re.compile(r"\bIS\s+\d{1,6}:\d{4}\b", re.IGNORECASE)
 
 
 def _fallback_recommendation(item_id: str, original_spec: str) -> dict:
+    """Return an unverified recommendation when no standard can be confirmed."""
     return {
         "item_id": item_id,
         "original_spec": original_spec,
@@ -23,6 +24,7 @@ def _fallback_recommendation(item_id: str, original_spec: str) -> dict:
 
 
 def _recommend_standard_impl(item_id: str, original_spec: str) -> dict:
+    """Build a recommendation from a matching standard and verification data."""
     matches = IS_PATTERN.findall(original_spec)
 
     if not matches:
@@ -97,6 +99,7 @@ def _recommend_standard_impl(item_id: str, original_spec: str) -> dict:
 
 
 def recommend_standard(item_id: str, original_spec: str) -> dict:
+    """Return a recommendation, falling back when processing takes too long."""
     return run_with_timeout(
         _recommend_standard_impl,
         item_id,
