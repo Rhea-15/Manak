@@ -1,3 +1,4 @@
+
 import threading
 import time
 from typing import Any
@@ -16,7 +17,13 @@ _CACHE = {}
 _CACHE_TTL_SECONDS = 60
 
 
-def run_with_timeout(func, *args, timeout_seconds: float = 2.0, fallback: Any = None, **kwargs):
+def run_with_timeout(
+    func,
+    *args,
+    timeout_seconds: float = 2.0,
+    fallback: Any = None,
+    **kwargs,
+):
     """Run a callable in a daemon thread and return a fallback on timeout."""
     result = {}
     error = None
@@ -27,7 +34,7 @@ def run_with_timeout(func, *args, timeout_seconds: float = 2.0, fallback: Any = 
 
         try:
             result["value"] = func(*args, **kwargs)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - worker failures are handled below
             error = exc
 
     thread = threading.Thread(target=target, daemon=True)
@@ -100,7 +107,9 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
             if standard_number:
                 standard = (
                     db.query(Standard)
-                    .filter(Standard.standard_number == standard_number)
+                    .filter(
+                        Standard.standard_number == standard_number
+                    )
                     .first()
                 )
 
@@ -144,6 +153,7 @@ def search_standards(query: str, top_k: int = 5) -> dict:
     now = time.monotonic()
 
     cached = _CACHE.get(cache_key)
+
     if cached and now - cached["timestamp"] < _CACHE_TTL_SECONDS:
         return cached["value"]
 
@@ -155,5 +165,9 @@ def search_standards(query: str, top_k: int = 5) -> dict:
         fallback=_empty_search_result(query, top_k),
     )
 
-    _CACHE[cache_key] = {"timestamp": now, "value": result}
+    _CACHE[cache_key] = {
+        "timestamp": now,
+        "value": result,
+    }
+
     return result
