@@ -26,7 +26,11 @@ def get_active_version(db: Session, standard_id: int):
 
 
 def create_new_version(
-    db: Session, standard_id: int, version_number: str, effective_date: date
+    db: Session,
+    standard_id: int,
+    version_number: str,
+    effective_date: date,
+    source_id: int | None = None,
 ):
     old_version = get_active_version(db, standard_id)
 
@@ -35,6 +39,7 @@ def create_new_version(
 
     new_version = StandardVersion(
         standard_id=standard_id,
+        source_id=source_id,
         version_number=version_number,
         effective_date=effective_date,
         status="active",

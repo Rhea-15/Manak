@@ -1,13 +1,14 @@
 from fastapi import APIRouter
 
-from ..schemas.search import SearchRequest, SearchResponse
-from ..services import search_service
+from ..schemas.search import SearchRequest
+from ..services.search_service import search_standards
 
 router = APIRouter(prefix="/api/v1", tags=["search"])
 
 
-@router.post("/search", response_model=SearchResponse)
-def search(payload: SearchRequest) -> SearchResponse:
-    """Return ranked candidate Indian Standard codes matching the user's search query."""
-    result = search_service(payload.query, payload.top_k)
-    return SearchResponse(**result)
+@router.post("/search")
+def search(payload: SearchRequest) -> dict:
+    return search_standards(
+        query=payload.query,
+        top_k=payload.top_k,
+    )

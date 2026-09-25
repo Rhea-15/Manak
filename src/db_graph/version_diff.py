@@ -44,6 +44,12 @@ def compare_versions(db: Session, old_version_id: int, new_version_id: int):
             "new": new_version.document_path,
         }
 
+    if old_version.source_id != new_version.source_id:
+        differences["source_id"] = {
+            "old": old_version.source_id,
+            "new": new_version.source_id,
+        }
+
     return {
         "standard_id": old_version.standard_id,
         "old_version_id": old_version.id,

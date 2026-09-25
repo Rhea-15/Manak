@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from src.backend.audit import create_audit_log
 from src.backend.database import get_db
+from src.backend.rbac import require_role
 from src.db_graph.models import ReviewQueue
 
 router = APIRouter(prefix="/review", tags=["Review Queue"])
@@ -11,6 +12,7 @@ router = APIRouter(prefix="/review", tags=["Review Queue"])
 @router.get("/queue")
 def get_review_queue(
     db: Session = Depends(get_db),  # noqa: B008
+    role: str = require_role("MANAGER"),
 ):
     items = db.query(ReviewQueue).order_by(ReviewQueue.created_at.desc()).all()
 
@@ -33,6 +35,7 @@ def get_review_queue(
 def approve_document(
     review_id: int,
     db: Session = Depends(get_db),  # noqa: B008
+    role: str = require_role("MANAGER"),
 ):
     item = db.query(ReviewQueue).filter(ReviewQueue.id == review_id).first()
 
@@ -63,6 +66,7 @@ def approve_document(
 def reject_document(
     review_id: int,
     db: Session = Depends(get_db),  # noqa: B008
+    role: str = require_role("MANAGER"),
 ):
     item = db.query(ReviewQueue).filter(ReviewQueue.id == review_id).first()
 
