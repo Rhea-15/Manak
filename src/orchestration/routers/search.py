@@ -1,7 +1,5 @@
 from fastapi import APIRouter, HTTPException
 
-from fastapi import APIRouter, HTTPException
-
 from ..schemas.search import SearchRequest, SearchResponse
 from ..services.search_service import search_standards
 

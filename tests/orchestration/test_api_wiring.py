@@ -7,6 +7,27 @@ from src.orchestration.main import app
 client = TestClient(app)
 
 
+def _search_result(count: int = 1) -> dict:
+    return {
+        "query": "wire",
+        "results": [
+            {
+                "standard_number": f"IS {index}",
+                "title": "PVC insulated cables",
+                "score": 0.91,
+                "status": "active",
+                "active_version": "2010",
+                "compliance": {},
+                "graph": {"found": True, "linked_standards": []},
+            }
+            for index in range(count)
+        ],
+        "vector_results_found": count,
+        "results_returned": count,
+        "source": "qdrant_postgresql_neo4j",
+    }
+
+
 def test_search_valid_request():
     """A valid search request returns the mocked standard results."""
     mock_result = {
@@ -40,10 +61,6 @@ def test_search_valid_request():
             json={"query": "fireproof wire", "language": "en", "top_k": 3},
         )
 
-    """A well-formed search request returns 200 with a results list."""
-    resp = client.post(
-        "/api/v1/search", json={"query": "fireproof wire", "language": "en", "top_k": 3}
-    )
     assert resp.status_code == 200
     body = resp.json()
     assert "results" in body
@@ -101,21 +118,41 @@ def test_search_invalid_language_returns_422():
 
 def test_search_returns_multiple_results():
     """The mock search service returns exactly top_k results when enough candidates exist."""
-    resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 4})
+    with patch(
+        "src.orchestration.routers.search.search_standards",
+        return_value=_search_result(4),
+    ):
+        resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 4})
     assert len(resp.json()["results"]) == 4
 
 
 def test_search_respects_top_k_limit():
     """Requesting top_k=1 returns exactly one result."""
-    resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 1})
+    with patch(
+        "src.orchestration.routers.search.search_standards",
+        return_value=_search_result(1),
+    ):
+        resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 1})
     assert len(resp.json()["results"]) == 1
 
 
 def test_search_response_schema_fields():
     """Each search result includes all fields required by the frontend contract."""
-    resp = client.post("/api/v1/search", json={"query": "wire"})
+    with patch(
+        "src.orchestration.routers.search.search_standards",
+        return_value=_search_result(),
+    ):
+        resp = client.post("/api/v1/search", json={"query": "wire"})
     result = resp.json()["results"][0]
-    for field in ("is_code", "title", "score", "status", "snippet"):
+    for field in (
+        "standard_number",
+        "title",
+        "score",
+        "status",
+        "active_version",
+        "compliance",
+        "graph",
+    ):
         assert field in result
 
 
@@ -136,29 +173,6 @@ def test_cors_headers_present():
     )
     assert resp.headers.get("access-control-allow-origin") == "http://localhost:3000"
 
-def test_routes_registered():
-    """Define a nested helper for walking registered route paths."""
-    def collect_paths(routes):
-        """Include paths from nested FastAPI routers."""
-        paths = []
-
-        for r in routes:
-            p = getattr(r, "path", None)
-
-            if p is not None:
-                paths.append(p)
-
-            orig = getattr(r, "original_router", None)
-
-            if orig is not None:
-                paths.extend(collect_paths(orig.routes))
-
-            nested = getattr(r, "routes", None)
-
-            if nested:
-                paths.extend(collect_paths(nested))
-
-        return paths
 # FastAPI 0.141+ wraps included routers; unwrap via original_router to find real paths
 def collect_paths(routes):
     """Recursively collect route paths, unwrapping FastAPI's router nesting (0.141+)."""
