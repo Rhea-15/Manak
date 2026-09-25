@@ -45,10 +45,8 @@ export default function CompliancePage() {
               RS
             </div>
           </div>
-
         </div>
       </header>
-
 
       {/* MAIN */}
       <section className="mx-auto max-w-[1150px] px-8 py-14">
@@ -75,7 +73,6 @@ export default function CompliancePage() {
           </p>
 
         </div>
-
 
         {/* DOCUMENT CARD */}
         <div className="mt-12 flex flex-col justify-between gap-6 rounded-[24px] border border-[#E4D7D1] bg-white p-7 md:flex-row md:items-center">
@@ -113,7 +110,6 @@ export default function CompliancePage() {
 
         </div>
 
-
         {/* COMPLIANCE SUMMARY */}
         <div className="mt-10 grid gap-6 md:grid-cols-[1fr_280px]">
 
@@ -149,7 +145,6 @@ export default function CompliancePage() {
             </p>
 
           </div>
-
 
           {/* QUICK STATUS */}
           <div className="rounded-[24px] border border-[#E4DAD5] bg-white p-7">
@@ -188,7 +183,6 @@ export default function CompliancePage() {
 
         </div>
 
-
         {/* COMPARISON */}
         <div className="mt-14">
 
@@ -201,7 +195,6 @@ export default function CompliancePage() {
               Tender vs applicable standard
             </h2>
           </div>
-
 
           {/* COMPARISON CARD */}
           <div className="overflow-hidden rounded-[24px] border border-[#E4DAD5] bg-white">
@@ -222,7 +215,6 @@ export default function CompliancePage() {
               </div>
 
             </div>
-
 
             {/* COMPARISON CONTENT */}
             <div className="grid md:grid-cols-2">
@@ -245,7 +237,6 @@ export default function CompliancePage() {
 
               </div>
 
-
               {/* RIGHT */}
               <div className="p-7">
 
@@ -265,7 +256,6 @@ export default function CompliancePage() {
               </div>
 
             </div>
-
 
             {/* STATUS */}
             <div className="border-t border-[#E4DAD5] bg-[#FFF9F3] px-7 py-5">
@@ -304,7 +294,6 @@ export default function CompliancePage() {
 
         </div>
 
-
         {/* SECOND REQUIREMENT */}
         <div className="mt-6 overflow-hidden rounded-[24px] border border-[#E4DAD5] bg-white">
 
@@ -327,7 +316,6 @@ export default function CompliancePage() {
 
             </div>
 
-
             <div className="p-7">
 
               <div className="mb-4 flex items-center gap-2">
@@ -347,7 +335,6 @@ export default function CompliancePage() {
 
           </div>
 
-
           <div className="border-t border-[#E4DAD5] bg-[#F5FAF5] px-7 py-5">
 
             <div className="flex items-center gap-3">
@@ -366,7 +353,6 @@ export default function CompliancePage() {
           </div>
 
         </div>
-
 
         {/* FOOTER ACTIONS */}
         <div className="mt-12 flex flex-col gap-4 border-t border-[#E4DAD5] pt-8 sm:flex-row sm:items-center sm:justify-between">
