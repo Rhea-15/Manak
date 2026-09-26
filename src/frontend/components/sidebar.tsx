@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   LayoutDashboard,
   Upload,
@@ -26,7 +27,7 @@ const navigation = [
   {
     name: "Standards Search",
     icon: Search,
-    href: "/standards",
+    href: "/search",
   },
   {
     name: "AI Recommendations",
@@ -41,17 +42,17 @@ const navigation = [
   {
     name: "Related Standards",
     icon: GitBranch,
-    href: "/related-standards",
+    href: "/search",
   },
   {
     name: "Reports",
     icon: FileText,
-    href: "/reports",
+    href: "/compliance",
   },
   {
     name: "My Workspace",
     icon: FolderOpen,
-    href: "/workspace",
+    href: "/compliance",
   },
 ];
 
@@ -90,7 +91,7 @@ export default function Sidebar() {
           const Icon = item.icon;
 
           return (
-            <a
+            <Link
               key={item.name}
               href={item.href}
               className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/70 transition-all duration-200 hover:bg-white/10 hover:text-white"
@@ -104,7 +105,7 @@ export default function Sidebar() {
 
               <span>{item.name}</span>
 
-            </a>
+            </Link>
           );
         })}
 
