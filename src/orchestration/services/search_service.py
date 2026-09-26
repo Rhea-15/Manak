@@ -1,10 +1,10 @@
-import threading
 import hashlib
+import threading
 from typing import Any
 
-from src.backend.cache import cache_get, cache_set
 from src.ai_search.embedding_pipeline import EmbeddingModel
 from src.ai_search.qdrant_schema import QdrantConfig, QdrantSchemaManager
+from src.backend.cache import cache_get, cache_set
 from src.backend.compliance_rules import check_compliance_rules
 from src.backend.database import SessionLocal
 from src.db_graph.graph_service import get_standard_graph
@@ -32,7 +32,7 @@ def run_with_timeout(
 
         try:
             result["value"] = func(*args, **kwargs)
-        except Exception as exc:
+        except Exception as exc:  # Consider being more specific (e.g., RuntimeError, ValueError)
             error = exc
 
     thread = threading.Thread(target=target, daemon=True)
@@ -147,7 +147,7 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
 def search_standards(query: str, top_k: int = 5) -> dict:
     """Return Redis-cached search results or run a bounded lookup."""
     cache_key_hash = hashlib.sha256(
-        f"{query.strip().lower()}:{top_k}".encode("utf-8")
+        f"{query.strip().lower()}:{top_k}".encode()
     ).hexdigest()
 
     cache_key = f"manak:search:{cache_key_hash}"
