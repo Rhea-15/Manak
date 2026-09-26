@@ -19,7 +19,7 @@ const initialEdges: Edge[] = [
 
 export default function NormativeTreeGraph() {
   return (
-    <div style={{ width: '100%', height: '500px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+    <div className="w-full h-[500px] border border-slate-200 rounded-lg">
       <ReactFlow defaultNodes={initialNodes} defaultEdges={initialEdges} fitView>
         <Background />
         <Controls />
