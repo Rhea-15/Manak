@@ -158,8 +158,8 @@ def search_standards(query: str, top_k: int = 5) -> dict:
     """Return Redis-cached search results or run a bounded lookup."""
 
     cache_key_hash = hashlib.sha256(
-        f"{query.strip().lower()}:{top_k}".encode("utf-8")
-    ).hexdigest()
+    f"{query.strip().lower()}:{top_k}".encode()
+).hexdigest()
 
     cache_key = f"manak:search:{cache_key_hash}"
 
