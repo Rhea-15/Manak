@@ -32,7 +32,7 @@ def run_with_timeout(
 
         try:
             result["value"] = func(*args, **kwargs)
-        except Exception as exc:  # Consider being more specific (e.g., RuntimeError, ValueError)
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
             error = exc
 
     thread = threading.Thread(target=target, daemon=True)
