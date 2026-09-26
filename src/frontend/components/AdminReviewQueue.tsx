@@ -39,12 +39,18 @@ export default function AdminReviewQueue() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
-                    <button className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100">
-                      <CheckCircle2 size={14} /> Approve
-                    </button>
-                    <button className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100">
-                      <XCircle size={14} /> Reject
-                    </button>
+                    <button
+  onClick={() => alert(`Approved: ${item.itemName}`)}
+  className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+>
+  <CheckCircle2 size={14} /> Approve
+</button>
+<button
+  onClick={() => alert(`Rejected: ${item.itemName}`)}
+  className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100"
+>
+  <XCircle size={14} /> Reject
+</button>
                   </div>
                 </td>
               </tr>
