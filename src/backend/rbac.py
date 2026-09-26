@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated
 
 import casbin
-from fastapi import Depends, Header, HTTPException, Request
+from fastapi import Header, HTTPException, Request
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "casbin_model.conf"
