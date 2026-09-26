@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 
 from src.orchestration.main import app
@@ -5,11 +7,60 @@ from src.orchestration.main import app
 client = TestClient(app)
 
 
+def _search_result(count: int = 1) -> dict:
+    return {
+        "query": "wire",
+        "results": [
+            {
+                "standard_number": f"IS {index}",
+                "title": "PVC insulated cables",
+                "score": 0.91,
+                "status": "active",
+                "active_version": "2010",
+                "compliance": {},
+                "graph": {"found": True, "linked_standards": []},
+            }
+            for index in range(count)
+        ],
+        "vector_results_found": count,
+        "results_returned": count,
+        "source": "qdrant_postgresql_neo4j",
+    }
+
+
 def test_search_valid_request():
-    """A well-formed search request returns 200 with a results list."""
-    resp = client.post(
-        "/api/v1/search", json={"query": "fireproof wire", "language": "en", "top_k": 3}
-    )
+    """A valid search request returns the mocked standard results."""
+    mock_result = {
+        "query": "fireproof wire",
+        "results": [
+            {
+                "standard_number": "IS 694:2010",
+                "title": "PVC insulated cables",
+                "score": 0.91,
+                "status": "active",
+                "active_version": "2010",
+                "compliance": {},
+                "graph": {
+                    "found": True,
+                    "standard_number": "IS 694:2010",
+                    "linked_standards": [],
+                },
+            }
+        ],
+        "vector_results_found": 1,
+        "results_returned": 1,
+        "source": "qdrant_postgresql_neo4j",
+    }
+
+    with patch(
+        "src.orchestration.routers.search.search_standards",
+        return_value=mock_result,
+    ):
+        resp = client.post(
+            "/api/v1/search",
+            json={"query": "fireproof wire", "language": "en", "top_k": 3},
+        )
+
     assert resp.status_code == 200
     body = resp.json()
     assert "results" in body
@@ -67,21 +118,41 @@ def test_search_invalid_language_returns_422():
 
 def test_search_returns_multiple_results():
     """The mock search service returns exactly top_k results when enough candidates exist."""
-    resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 4})
+    with patch(
+        "src.orchestration.routers.search.search_standards",
+        return_value=_search_result(4),
+    ):
+        resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 4})
     assert len(resp.json()["results"]) == 4
 
 
 def test_search_respects_top_k_limit():
     """Requesting top_k=1 returns exactly one result."""
-    resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 1})
+    with patch(
+        "src.orchestration.routers.search.search_standards",
+        return_value=_search_result(1),
+    ):
+        resp = client.post("/api/v1/search", json={"query": "wire", "top_k": 1})
     assert len(resp.json()["results"]) == 1
 
 
 def test_search_response_schema_fields():
     """Each search result includes all fields required by the frontend contract."""
-    resp = client.post("/api/v1/search", json={"query": "wire"})
+    with patch(
+        "src.orchestration.routers.search.search_standards",
+        return_value=_search_result(),
+    ):
+        resp = client.post("/api/v1/search", json={"query": "wire"})
     result = resp.json()["results"][0]
-    for field in ("is_code", "title", "score", "status", "snippet"):
+    for field in (
+        "standard_number",
+        "title",
+        "score",
+        "status",
+        "active_version",
+        "compliance",
+        "graph",
+    ):
         assert field in result
 
 
@@ -122,7 +193,13 @@ def collect_paths(routes):
 def test_routes_registered():
     """All three orchestration endpoints are registered on the app."""
     paths = collect_paths(app.routes)
+
     assert "/api/v1/search" in paths
     assert "/api/v1/recommendation" in paths
     assert "/api/v1/score" in paths
+    assert "/audit/logs" in paths
+    assert "/compliance/{standard_id}" in paths
+    assert "/quality-score/{standard_id}" in paths
+    assert "/review/queue" in paths
+    assert "/verification/{standard_id}" in paths
 
