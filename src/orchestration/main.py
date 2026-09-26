@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.backend import audit, compliance_api, quality_score, review, verification
 
 from .routers import recommendation, score, search
+from src.backend import documents
 
 app = FastAPI(
     title="MANAK Orchestration Layer",
@@ -27,6 +28,7 @@ app.include_router(compliance_api.router)
 app.include_router(quality_score.router)
 app.include_router(review.router)
 app.include_router(verification.router)
+app.include_router(documents.router)
 
 
 @app.get("/health")
