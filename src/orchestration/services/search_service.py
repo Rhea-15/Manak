@@ -9,8 +9,7 @@ from src.backend.compliance_rules import check_compliance_rules
 from src.backend.database import SessionLocal
 from src.db_graph.graph_service import get_standard_graph
 from src.db_graph.models import Standard
-from src.db_graph.versioning import get_active_version
-
+import src.db_graph.versioning
 
 _embedding_model = None
 _qdrant = None
@@ -113,7 +112,7 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
             if standard is None:
                 continue
 
-            active_version = get_active_version(db, standard.id)
+            active_version = src.db_graph.versioning.get_active_version(db, standard.id)
             compliance = check_compliance_rules(db, standard.id)
             graph = get_standard_graph(standard.standard_number)
 

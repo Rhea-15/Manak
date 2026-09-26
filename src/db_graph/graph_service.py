@@ -1,7 +1,6 @@
 from src.backend.cache import cache_get, cache_set
 from src.db_graph.neo4j_connection import driver
 
-
 GRAPH_CACHE_TTL = 60
 
 
