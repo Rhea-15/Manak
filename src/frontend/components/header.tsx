@@ -55,9 +55,9 @@ export default function Header() {
             <input
               type="text"
               placeholder="Search IS Codes, standards, or type in natural language..."
-              className="ml-3 w-full bg-transparent text-sm text-[#211735] outline-none placeholder:text-[#806D7B]"
+              suppressHydrationWarning
+              className="..."
             />
-
           </div>
         </div>
 
@@ -111,7 +111,7 @@ export default function Header() {
 
 
           {/* NOTIFICATION */}
-          <button className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#493D50] transition hover:bg-white">
+          <button aria-label="Notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#493D50] transition hover:bg-white">
 
             <Bell size={21} strokeWidth={1.7} />
 
