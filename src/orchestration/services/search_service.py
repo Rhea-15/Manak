@@ -31,7 +31,7 @@ def run_with_timeout(
 
         try:
             result["value"] = func(*args, **kwargs)
-        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+        except Exception as exc:  # noqa: BLE001 - worker failures use fallback
             error = exc
 
     thread = threading.Thread(target=target, daemon=True)
@@ -93,20 +93,38 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
         for item in vector_results:
             payload = item.get("payload") or {}
 
-            standard_number = payload.get("standard_code") or payload.get("standard_number")
+            standard_number = (
+                payload.get("standard_code")
+                or payload.get("standard_number")
+            )
 
             standard = None
 
             if standard_number:
                 standard = (
-                    db.query(Standard).filter(Standard.standard_number == standard_number).first()
+                    db.query(Standard)
+                    .filter(
+                        Standard.standard_number == standard_number
+                    )
+                    .first()
                 )
 
             if standard is None:
                 continue
-            active_version = versioning.get_active_version(db, standard.id)
-            compliance = check_compliance_rules(db, standard.id)
-            graph = get_standard_graph(standard.standard_number)
+
+            active_version = versioning.get_active_version(
+                db,
+                standard.id,
+            )
+
+            compliance = check_compliance_rules(
+                db,
+                standard.id,
+            )
+
+            graph = get_standard_graph(
+                standard.standard_number
+            )
 
             results.append(
                 {
@@ -114,11 +132,16 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
                     "title": standard.title,
                     "score": item.get("score", 0.0),
                     "status": standard.status,
-                    "active_version": (active_version.version_number if active_version else None),
+                    "active_version": (
+                        active_version.version_number
+                        if active_version
+                        else None
+                    ),
                     "compliance": compliance,
                     "graph": graph,
                 }
             )
+
     finally:
         db.close()
 
@@ -133,7 +156,10 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
 
 def search_standards(query: str, top_k: int = 5) -> dict:
     """Return Redis-cached search results or run a bounded lookup."""
-    cache_key_hash = hashlib.sha256(f"{query.strip().lower()}:{top_k}".encode()).hexdigest()
+
+    cache_key_hash = hashlib.sha256(
+        f"{query.strip().lower()}:{top_k}".encode("utf-8")
+    ).hexdigest()
 
     cache_key = f"manak:search:{cache_key_hash}"
 
@@ -149,6 +175,9 @@ def search_standards(query: str, top_k: int = 5) -> dict:
         timeout_seconds=2.0,
         fallback=_empty_search_result(query, top_k),
     )
+
+    if result is None:
+        result = _empty_search_result(query, top_k)
 
     if result.get("status") != "fallback":
         cache_set(cache_key, result, ttl=60)
