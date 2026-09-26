@@ -7,9 +7,9 @@ from src.ai_search.qdrant_schema import QdrantConfig, QdrantSchemaManager
 from src.backend.cache import cache_get, cache_set
 from src.backend.compliance_rules import check_compliance_rules
 from src.backend.database import SessionLocal
+from src.db_graph import versioning
 from src.db_graph.graph_service import get_standard_graph
 from src.db_graph.models import Standard
-import src.db_graph.versioning
 
 _embedding_model = None
 _qdrant = None
@@ -93,26 +93,18 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
         for item in vector_results:
             payload = item.get("payload") or {}
 
-            standard_number = (
-                payload.get("standard_code")
-                or payload.get("standard_number")
-            )
+            standard_number = payload.get("standard_code") or payload.get("standard_number")
 
             standard = None
 
             if standard_number:
                 standard = (
-                    db.query(Standard)
-                    .filter(
-                        Standard.standard_number == standard_number
-                    )
-                    .first()
+                    db.query(Standard).filter(Standard.standard_number == standard_number).first()
                 )
 
             if standard is None:
                 continue
-
-            active_version = src.db_graph.versioning.get_active_version(db, standard.id)
+            active_version = versioning.get_active_version(db, standard.id)
             compliance = check_compliance_rules(db, standard.id)
             graph = get_standard_graph(standard.standard_number)
 
@@ -122,11 +114,7 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
                     "title": standard.title,
                     "score": item.get("score", 0.0),
                     "status": standard.status,
-                    "active_version": (
-                        active_version.version_number
-                        if active_version
-                        else None
-                    ),
+                    "active_version": (active_version.version_number if active_version else None),
                     "compliance": compliance,
                     "graph": graph,
                 }
@@ -145,9 +133,7 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
 
 def search_standards(query: str, top_k: int = 5) -> dict:
     """Return Redis-cached search results or run a bounded lookup."""
-    cache_key_hash = hashlib.sha256(
-        f"{query.strip().lower()}:{top_k}".encode()
-    ).hexdigest()
+    cache_key_hash = hashlib.sha256(f"{query.strip().lower()}:{top_k}".encode()).hexdigest()
 
     cache_key = f"manak:search:{cache_key_hash}"
 
