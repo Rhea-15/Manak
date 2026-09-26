@@ -30,7 +30,7 @@ def require_role(required_role: str):
     def dependency(
         request: Request,
         user_role: Annotated[str | None, Header(alias="X-User-Role")] = None,
-    ):
+    ) -> str:
         if not user_role:
             raise HTTPException(
                 status_code=401,
@@ -45,4 +45,4 @@ def require_role(required_role: str):
             raise HTTPException(status_code=403, detail="Access denied")
         return user_role
 
-    return Depends(dependency)
+    return dependency

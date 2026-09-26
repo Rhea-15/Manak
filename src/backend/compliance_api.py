@@ -12,6 +12,6 @@ router = APIRouter(prefix="/compliance", tags=["Compliance"])
 def get_compliance_status(
     standard_id: int,
     db: Session = Depends(get_db),  # noqa: B008
-    role: str = require_role("MANAGER"),
+    role: str = Depends(require_role("MANAGER")),
 ):
     return check_compliance_rules(db, standard_id)
