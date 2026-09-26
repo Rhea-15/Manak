@@ -32,6 +32,7 @@ class StandardVersion(Base):
 
     id = Column(Integer, primary_key=True)
     standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
+    source_id = Column(Integer, ForeignKey("data_sources.id"), nullable=True)
     version_number = Column(String(50), nullable=False)
     effective_date = Column(Date, nullable=True)
     status = Column(String(50), nullable=False)

@@ -10,14 +10,20 @@ class SearchRequest(BaseModel):
 
 
 class SearchResult(BaseModel):
-    is_code: str
+    standard_number: str
     title: str
     score: float = Field(..., ge=0, le=1)
     status: str
-    snippet: str
+    active_version: str | None = None
+    compliance: dict = Field(default_factory=dict)
+    graph: dict = Field(default_factory=dict)
 
 
 class SearchResponse(BaseModel):
     query: str
     results: list[SearchResult]
-    took_ms: int
+    vector_results_found: int = 0
+    results_returned: int = 0
+    source: str
+    status: str | None = None
+    top_k: int | None = None
