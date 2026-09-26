@@ -53,9 +53,10 @@ def test_search_valid_request():
     }
 
     with patch(
-        "src.orchestration.routers.search.search_standards",
-        return_value=mock_result,
-    ):
+    "src.orchestration.routers.recommendation.recommendation_service",
+    return_value=mock_result,
+):
+
         resp = client.post(
             "/api/v1/search",
             json={"query": "fireproof wire", "language": "en", "top_k": 3},
@@ -75,13 +76,27 @@ def test_search_invalid_request_missing_query():
 
 def test_recommendation_valid_request():
     """A well-formed recommendation request returns 200 from the rules engine."""
-    resp = client.post(
-        "/api/v1/recommendation",
-        json={
-            "item_id": "item-1",
-            "original_spec": "PVC Insulated Wires as per IS 694:1990",
-        },
-    )
+    mock_result = {
+        "item_id": "item-1",
+        "original_spec": "PVC Insulated Wires as per IS 694:1990",
+        "ai_suggested_spec": "PVC Insulated Wires as per IS 694:2010",
+        "compliant": True,
+        "mandatory_marks": ["safety", "quality"],
+        "allied_standards": ["IS 1554"],
+        "source": "rules_engine",
+    }
+    
+    with patch(
+        "src.orchestration.services.recommendation_service",
+        return_value=mock_result,
+    ):
+        resp = client.post(
+            "/api/v1/recommendation",
+            json={
+                "item_id": "item-1",
+                "original_spec": "PVC Insulated Wires as per IS 694:1990",
+            },
+        )
     assert resp.status_code == 200
     assert resp.json()["source"] == "rules_engine"
 

@@ -12,7 +12,9 @@ qdrant-client==1.19.1
 # Database ORM
 sqlalchemy>=2.0.0,<3.0.0
 psycopg[binary]>=3.1.0
+
 neo4j>=5.0.0,<6.0.0
+redis>=5.0.0,<6.0.0
 
 # Document Processing & NLP
 spacy==3.8.16
