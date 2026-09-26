@@ -87,7 +87,7 @@ async def upload_document(
                 parse_result = await run_in_threadpool(parser.parse, temp_path)
                 extracted_data = parse_result.to_dict()
                 parse_status = "completed"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning(
                     "Failed to parse document %s: %s",
                     object_name,
@@ -132,7 +132,7 @@ async def upload_document(
         if storage_result:
             try:
                 await run_in_threadpool(delete_file, storage_result["object_name"])
-            except Exception as cleanup_exc:  # noqa: BLE001
+            except Exception as cleanup_exc:
                 logger.warning(
                     "Failed to delete orphaned object %s: %s",
                     storage_result["object_name"],
