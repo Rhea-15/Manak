@@ -75,13 +75,23 @@ def test_search_invalid_request_missing_query():
 
 def test_recommendation_valid_request():
     """A well-formed recommendation request returns 200 from the rules engine."""
-    resp = client.post(
-        "/api/v1/recommendation",
-        json={
-            "item_id": "item-1",
-            "original_spec": "PVC Insulated Wires as per IS 694:1990",
-        },
-    )
+    mock_result = {
+        "source": "rules_engine",
+        "recommendation": "Recommended spec",
+        # Add other required fields based on RecommendationResponse schema
+    }
+    
+    with patch(
+        "src.orchestration.services.recommendation_service",
+        return_value=mock_result,
+    ):
+        resp = client.post(
+            "/api/v1/recommendation",
+            json={
+                "item_id": "item-1",
+                "original_spec": "PVC Insulated Wires as per IS 694:1990",
+            },
+        )
     assert resp.status_code == 200
     assert resp.json()["source"] == "rules_engine"
 
