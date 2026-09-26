@@ -1,8 +1,8 @@
-
 import threading
-import time
+import hashlib
 from typing import Any
 
+from src.backend.cache import cache_get, cache_set
 from src.ai_search.embedding_pipeline import EmbeddingModel
 from src.ai_search.qdrant_schema import QdrantConfig, QdrantSchemaManager
 from src.backend.compliance_rules import check_compliance_rules
@@ -11,10 +11,9 @@ from src.db_graph.graph_service import get_standard_graph
 from src.db_graph.models import Standard
 from src.db_graph.versioning import get_active_version
 
+
 _embedding_model = None
 _qdrant = None
-_CACHE = {}
-_CACHE_TTL_SECONDS = 60
 
 
 def run_with_timeout(
@@ -29,12 +28,11 @@ def run_with_timeout(
     error = None
 
     def target():
-        """Capture the worker result or exception for the calling thread."""
         nonlocal error
 
         try:
             result["value"] = func(*args, **kwargs)
-        except Exception as exc:  # noqa: BLE001 - worker failures are handled below
+        except Exception as exc:
             error = exc
 
     thread = threading.Thread(target=target, daemon=True)
@@ -90,7 +88,6 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
     )
 
     results = []
-
     db = SessionLocal()
 
     try:
@@ -148,14 +145,17 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
 
 
 def search_standards(query: str, top_k: int = 5) -> dict:
-    """Return cached standard search results or run a bounded lookup."""
-    cache_key = ("search_standards", query, top_k)
-    now = time.monotonic()
+    """Return Redis-cached search results or run a bounded lookup."""
+    cache_key_hash = hashlib.sha256(
+        f"{query.strip().lower()}:{top_k}".encode("utf-8")
+    ).hexdigest()
 
-    cached = _CACHE.get(cache_key)
+    cache_key = f"manak:search:{cache_key_hash}"
 
-    if cached and now - cached["timestamp"] < _CACHE_TTL_SECONDS:
-        return cached["value"]
+    cached_result = cache_get(cache_key)
+
+    if cached_result is not None:
+        return cached_result
 
     result = run_with_timeout(
         _search_standards_impl,
@@ -165,9 +165,7 @@ def search_standards(query: str, top_k: int = 5) -> dict:
         fallback=_empty_search_result(query, top_k),
     )
 
-    _CACHE[cache_key] = {
-        "timestamp": now,
-        "value": result,
-    }
+    if result.get("status") != "fallback":
+        cache_set(cache_key, result, ttl=60)
 
     return result
