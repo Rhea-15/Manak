@@ -108,6 +108,6 @@ def calculate_quality_score(db: Session, standard_id: int):
 def get_quality_score(
     standard_id: int,
     db: Session = Depends(get_db),  # noqa: B008
-    role: str = require_role("MANAGER"),
+    role: str = Depends(require_role("MANAGER")),
 ):
     return calculate_quality_score(db, standard_id)

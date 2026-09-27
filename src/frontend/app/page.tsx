@@ -204,9 +204,14 @@ export default function Home() {
             </p>
           </div>
 
-          <p className="text-xs text-[#817783]">
-            Built for transparent, compliant procurement · MANAK v1.0
-          </p>
+          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-5">
+            <Link href="/operations" className="text-xs font-medium text-[#74478A] hover:underline">
+              Operations
+            </Link>
+            <p className="text-xs text-[#817783]">
+              Built for transparent, compliant procurement · MANAK v1.0
+            </p>
+          </div>
 
         </div>
       </footer>

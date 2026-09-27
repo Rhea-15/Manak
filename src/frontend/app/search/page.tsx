@@ -9,6 +9,8 @@ import {
   Languages,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 /* =========================================================
    LANGUAGES
@@ -649,6 +651,20 @@ const standards = [
   },
 ];
 
+type ApiSearchResult = {
+  standard_id: number | null;
+  standard_number: string;
+  title: string;
+  score: number;
+  status: string;
+  active_version?: string | null;
+};
+
+type SearchResponse = {
+  results: ApiSearchResult[];
+  results_returned: number;
+};
+
 /* =========================================================
    CATEGORY TRANSLATIONS
 ========================================================= */
@@ -679,11 +695,15 @@ const categories = [
 ========================================================= */
 
 export default function SearchPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] =
     useState("All Standards");
   const [language, setLanguage] = useState("English");
   const [showLanguages, setShowLanguages] = useState(false);
+  const [apiResults, setApiResults] = useState<ApiSearchResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const t =
     translations[
@@ -694,7 +714,7 @@ export default function SearchPage() {
      SEARCH
   ======================================================= */
 
-  const filteredStandards = standards.filter(
+  const filteredStandards = apiResults ?? standards.filter(
     (standard) => {
       const searchQuery =
         query.toLowerCase().trim();
@@ -715,6 +735,35 @@ export default function SearchPage() {
       return matchesSearch && matchesCategory;
     }
   );
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
+      setSearchError("Enter a search term first.");
+      return;
+    }
+
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const response = await apiRequest<SearchResponse>("/api/v1/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: query.trim(),
+          language: language === "Hindi" ? "hi" : "en",
+          top_k: 10,
+        }),
+      });
+      setApiResults(response.results);
+    } catch (error) {
+      setSearchError(
+        error instanceof Error ? error.message : "Search failed. Try again."
+      );
+      setApiResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   return (
     <main
@@ -863,19 +912,29 @@ export default function SearchPage() {
               onChange={(e) =>
                 setQuery(e.target.value)
               }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void handleSearch();
+              }}
               placeholder={t.placeholder}
               className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#211735] outline-none placeholder:text-[#A3989D]"
             />
 
             <button
               type="button"
-              onClick={() => {}}
-              className="hidden rounded-xl bg-[#74478A] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#653C78] sm:block"
+              onClick={() => void handleSearch()}
+              disabled={searching}
+              className="hidden rounded-xl bg-[#74478A] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#653C78] disabled:cursor-wait disabled:opacity-60 sm:block"
             >
-              {t.search}
+              {searching ? "Searching..." : t.search}
             </button>
 
           </div>
+
+          {searchError && (
+            <p role="alert" className="mt-3 text-sm text-[#A55E65]">
+              {searchError}
+            </p>
+          )}
 
           {/* LANGUAGE INFO */}
 
@@ -982,12 +1041,33 @@ export default function SearchPage() {
             <div className="space-y-4">
 
               {filteredStandards.map((standard) => {
-
-                const translated =
-                  standard.translations[
-                    language as keyof typeof standard.translations
-                  ] ||
-                  standard.translations.English;
+                const isApiResult = "standard_number" in standard;
+                const standardCode = isApiResult
+                  ? standard.standard_number
+                  : standard.code;
+                const translated = isApiResult
+                  ? {
+                      title: standard.title,
+                      description: `Match score ${Math.round(standard.score * 100)}%${standard.active_version ? ` · Active version ${standard.active_version}` : ""}`,
+                    }
+                  : standard.translations[
+                      language as keyof typeof standard.translations
+                    ] || standard.translations.English;
+                const standardCategory = isApiResult
+                  ? "All Standards"
+                  : standard.category;
+                const openStandard = () => {
+                  if (!isApiResult || standard.standard_id === null) return;
+                  localStorage.setItem(
+                    "manak_selected_standard",
+                    JSON.stringify({
+                      standard_id: standard.standard_id,
+                      standard_number: standard.standard_number,
+                      title: standard.title,
+                    })
+                  );
+                  router.push("/compliance");
+                };
 
                 return (
                   <article
@@ -1013,21 +1093,21 @@ export default function SearchPage() {
                           <div className="flex flex-wrap items-center gap-3">
 
                             <span className="font-medium text-[#74478A]">
-                              {standard.code}
+                              {standardCode}
                             </span>
 
                             <span className="rounded-full bg-[#F2EEE8] px-3 py-1 text-[10px] text-[#806D7B]">
                               {
                                 t[
                                   categoryKeyMap[
-                                    standard.category
+                                    standardCategory
                                   ]
                                 ] as string
                               }
                             </span>
 
                             <span className="rounded-full bg-[#EDF5ED] px-3 py-1 text-[10px] text-[#5D8260]">
-                              {t.current}
+                              {isApiResult ? standard.status : t.current}
                             </span>
 
                           </div>
@@ -1045,6 +1125,8 @@ export default function SearchPage() {
 
                       <button
                         type="button"
+                        onClick={openStandard}
+                        disabled={isApiResult && standard.standard_id === null}
                         className="hidden shrink-0 text-[#74478A] sm:block"
                       >
                         <ArrowUpRight
@@ -1059,6 +1141,8 @@ export default function SearchPage() {
 
                       <button
                         type="button"
+                        onClick={openStandard}
+                        disabled={isApiResult && standard.standard_id === null}
                         className="flex items-center gap-2 text-xs font-medium text-[#74478A]"
                       >
                         {t.viewStandard}

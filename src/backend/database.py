@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine  # pyright: ignore[reportMissingImports]
+from sqlalchemy.orm import declarative_base, sessionmaker  # pyright: ignore[reportMissingImports]
 
 DATABASE_URL = "postgresql+psycopg://manak:manak_password@localhost:5432/manak"
 

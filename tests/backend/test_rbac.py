@@ -13,6 +13,18 @@ def test_executive_upload():
     assert check_permission("EXECUTIVE", "/documents/upload", "POST")
 
 
+def test_executive_list_documents():
+    assert check_permission("EXECUTIVE", "/documents", "GET")
+
+
+def test_manager_list_documents():
+    assert check_permission("MANAGER", "/documents", "GET")
+
+
+def test_admin_list_documents():
+    assert check_permission("ADMIN", "/documents", "GET")
+
+
 def test_admin_quality_score():
     assert check_permission("ADMIN", "/quality-score/1", "GET")
 
