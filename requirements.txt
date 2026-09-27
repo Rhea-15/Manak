@@ -12,7 +12,9 @@ qdrant-client==1.19.1
 # Database ORM
 sqlalchemy>=2.0.0,<3.0.0
 psycopg[binary]>=3.1.0
+
 neo4j>=5.0.0,<6.0.0
+redis>=5.0.0,<6.0.0
 
 # Document Processing & NLP
 spacy==3.8.16
@@ -37,3 +39,7 @@ casbin==1.43.0
 pytest==7.4.3
 pytest-cov==4.1.0
 pytest-mock==3.12.0
+
+# Document Upload and Storage
+minio
+python-multipart

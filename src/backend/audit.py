@@ -47,7 +47,7 @@ def get_audit_logs(db: Session):
 @router.get("/logs")
 def list_audit_logs(
     db: Session = Depends(get_db),  # noqa: B008
-    role: str = require_role("ADMIN"),
+    role: str = Depends(require_role("ADMIN")),
 ):
     """Return serialized audit entries to an administrator."""
     logs = get_audit_logs(db)
