@@ -10,6 +10,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import NormativeTreeGraph from "../../components/NormativeTreeGraph";
+import DiffAndGaugeView from "../../components/DiffAndGaugeView";
+
 export default function CompliancePage() {
   return (
     <main className="min-h-screen bg-[#FBF8F4] text-[#211735]">
@@ -110,7 +113,7 @@ export default function CompliancePage() {
 
         </div>
 
-        {/* COMPLIANCE SUMMARY */}
+        {/* COMPLIANCE SUMMARY & GAUGE */}
         <div className="mt-10 grid gap-6 md:grid-cols-[1fr_280px]">
 
           {/* SCORE */}
@@ -181,6 +184,38 @@ export default function CompliancePage() {
 
           </div>
 
+        </div>
+
+        {/* TRACK B DELIVERABLE: NORMATIVE TREE GRAPH */}
+        <div className="mt-14">
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#A35A91]">
+              Hierarchy & Standards Mapping
+            </p>
+
+            <h2 className="mt-3 font-serif text-3xl">
+              Normative Reference Tree
+            </h2>
+          </div>
+
+          <div className="overflow-hidden rounded-[24px] border border-[#E4DAD5] bg-white p-4 shadow-sm">
+            <NormativeTreeGraph />
+          </div>
+        </div>
+
+        {/* TRACK B DELIVERABLE: DIFF AND GAUGE VIEW */}
+        <div className="mt-14">
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#A35A91]">
+              Detailed Analysis Engine
+            </p>
+
+            <h2 className="mt-3 font-serif text-3xl">
+              Specification Diff & Gauge Analysis
+            </h2>
+          </div>
+
+          <DiffAndGaugeView />
         </div>
 
         {/* COMPARISON */}
