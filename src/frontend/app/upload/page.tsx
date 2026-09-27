@@ -4,43 +4,39 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Upload,
-  FileText,
   CheckCircle2,
   ArrowRight,
   ShieldCheck,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 
 /* =========================================================
-   SAMPLE DOCUMENTS
+   SUPPORTED FILE TYPES (cosmetic badges)
 ========================================================= */
-const sampleDocuments = [
+const supportedTypes = ["PDF", "DOCX", "CSV", "TXT"];
+
+/* =========================================================
+   WHAT HAPPENS NEXT STEPS
+========================================================= */
+const processSteps = [
   {
-    id: "sample-1",
-    title: "Procurement of Fire Extinguishers & Safety Systems",
-    organization: "Central Public Works Department (CPWD)",
-    referenceNo: "TENDER/2026/BIS/FS-089",
-    category: "Fire Safety",
-    fileSize: "2.4 MB",
-    fileName: "CPWD_Fire_Safety_Tender_2026.pdf",
+    number: "01",
+    title: "Extract",
+    description:
+      "MANAK extracts text and technical specifications from your tender.",
   },
   {
-    id: "sample-2",
-    title: "Supply & Laying of Electrical Wiring for Substation",
-    organization: "State Electricity Transmission Corp",
-    referenceNo: "SETC/ELEC/2026/112",
-    category: "Electrical",
-    fileSize: "4.1 MB",
-    fileName: "SETC_Electrical_Wiring_Tender.pdf",
+    number: "02",
+    title: "Understand",
+    description:
+      "The system identifies products, requirements, and key technical terms.",
   },
   {
-    id: "sample-3",
-    title: "Structural Steel Supply for Highway Bridge Construction",
-    organization: "National Highways Authority of India (NHAI)",
-    referenceNo: "NHAI/CIVIL/STEEL/2026/04",
-    category: "Civil Construction",
-    fileSize: "3.8 MB",
-    fileName: "NHAI_Structural_Steel_Procurement.pdf",
+    number: "03",
+    title: "Recommend",
+    description:
+      "Relevant Indian Standards are matched to your specifications.",
   },
 ];
 
@@ -53,9 +49,6 @@ export default function UploadPage() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedSample, setSelectedSample] = useState<
-    (typeof sampleDocuments)[0] | null
-  >(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -77,7 +70,6 @@ export default function UploadPage() {
       const file = e.dataTransfer.files[0];
       if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
         setSelectedFile(file);
-        setSelectedSample(null);
       } else {
         setErrorMsg("Please upload a valid PDF document.");
       }
@@ -90,32 +82,21 @@ export default function UploadPage() {
       const file = e.target.files[0];
       if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
         setSelectedFile(file);
-        setSelectedSample(null);
       } else {
         setErrorMsg("Please upload a valid PDF document.");
       }
     }
   };
 
-  const handleSampleSelect = (sample: (typeof sampleDocuments)[0]) => {
-    setSelectedSample(sample);
-    setSelectedFile(null);
-    setErrorMsg("");
-  };
-
   const handleStartAnalysis = () => {
-    if (!selectedFile && !selectedSample) {
-      setErrorMsg("Please upload a PDF file or select a sample document.");
+    if (!selectedFile) {
+      setErrorMsg("Please upload a PDF file to analyse.");
       return;
     }
 
     setIsAnalyzing(true);
 
-    const documentName = selectedFile
-      ? selectedFile.name
-      : selectedSample?.fileName || "Uploaded_Document.pdf";
-
-    localStorage.setItem("uploadedFileName", documentName);
+    localStorage.setItem("uploadedFileName", selectedFile.name);
 
     setTimeout(() => {
       router.push("/compliance");
@@ -191,7 +172,23 @@ export default function UploadPage() {
                   Drag & Drop your Tender PDF here
                 </h3>
                 <p className="mt-2 text-xs text-[#806D7B]">
-                  or click to browse from your computer (PDF up to 25 MB)
+                  or click to browse from your computer
+                </p>
+
+                {/* SUPPORTED FILE TYPE BADGES */}
+                <div className="mt-5 flex items-center justify-center gap-2">
+                  {supportedTypes.map((type) => (
+                    <span
+                      key={type}
+                      className="rounded-full border border-[#E4DAD5] bg-white px-3 py-1 text-[11px] text-[#806D7B]"
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="mt-3 text-[11px] text-[#A99AA6]">
+                  Maximum file size: 25 MB
                 </p>
               </div>
             )}
@@ -205,69 +202,58 @@ export default function UploadPage() {
           )}
         </div>
 
-        {/* OR DIVIDER */}
-        <div className="my-10 flex items-center gap-4">
-          <div className="h-px flex-1 bg-[#E4DAD5]" />
-          <span className="text-xs text-[#806D7B]">OR TRY A SAMPLE TENDER</span>
-          <div className="h-px flex-1 bg-[#E4DAD5]" />
-        </div>
+        {/* AI TAG + ANALYSE BUTTON ROW */}
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-[#806D7B]">
+            <Sparkles size={14} className="text-[#74478A]" />
+            AI-powered standards analysis
+          </div>
 
-        {/* SAMPLE TENDERS */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {sampleDocuments.map((sample) => {
-            const isSelected = selectedSample?.id === sample.id;
-            return (
-              <button
-                type="button"
-                key={sample.id}
-                onClick={() => handleSampleSelect(sample)}
-                className={`flex flex-col justify-between rounded-2xl border p-5 text-left transition ${
-                  isSelected
-                    ? "border-[#74478A] bg-[#EDE0EC] shadow-sm"
-                    : "border-[#E4DAD5] bg-white hover:border-[#C5A7C2] hover:bg-[#FDFBFD]"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-[#F2EEE8] px-2.5 py-0.5 text-[10px] text-[#806D7B]">
-                      {sample.category}
-                    </span>
-                    {isSelected && (
-                      <CheckCircle2 size={16} className="text-[#74478A]" />
-                    )}
-                  </div>
-                  <h4 className="mt-3 font-serif text-sm font-medium leading-snug text-[#211735]">
-                    {sample.title}
-                  </h4>
-                  <p className="mt-2 text-[11px] text-[#806D7B]">
-                    {sample.organization}
-                  </p>
-                </div>
-                <div className="mt-4 border-t border-[#EEE7E2] pt-3 text-[10px] text-[#806D7B]">
-                  {sample.referenceNo}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ACTION BUTTON */}
-        <div className="mt-10 text-center">
           <button
             type="button"
             onClick={handleStartAnalysis}
-            disabled={isAnalyzing}
-            className="inline-flex h-14 items-center gap-3 rounded-full bg-[#74478A] px-10 text-sm font-medium text-white transition hover:bg-[#633A77] disabled:opacity-50"
+            disabled={isAnalyzing || !selectedFile}
+            className={`inline-flex h-11 items-center gap-2 rounded-full px-6 text-sm font-medium transition ${
+              selectedFile
+                ? "bg-[#74478A] text-white hover:bg-[#633A77]"
+                : "bg-[#EDE7E3] text-[#A99AA6]"
+            } disabled:cursor-not-allowed`}
           >
             {isAnalyzing ? (
-              <span>Analyzing Document...</span>
+              <span>Analyzing...</span>
             ) : (
               <>
-                <span>Run Compliance Check</span>
+                <span>Analyse tender</span>
                 <ArrowRight size={16} />
               </>
             )}
           </button>
+        </div>
+
+        {/* WHAT HAPPENS NEXT */}
+        <div className="mt-14 border-t border-[#EEE4DD] pt-10">
+          <div className="mb-6 text-xs font-medium uppercase tracking-[0.2em] text-[#806D7B]">
+            What happens next
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {processSteps.map((step) => (
+              <div
+                key={step.number}
+                className="rounded-2xl border border-[#E4DAD5] bg-white p-6"
+              >
+                <div className="text-xs font-medium text-[#B37B92]">
+                  {step.number}
+                </div>
+                <h4 className="mt-2 font-serif text-xl text-[#211735]">
+                  {step.title}
+                </h4>
+                <p className="mt-2 text-sm leading-relaxed text-[#706578]">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </main>

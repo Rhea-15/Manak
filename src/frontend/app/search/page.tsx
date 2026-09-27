@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   ArrowUpRight,
@@ -9,22 +11,6 @@ import {
   ChevronRight,
   Languages,
 } from "lucide-react";
-
-/* =========================================================
-   LANGUAGES
-========================================================= */
-const languages = [
-  "English",
-  "Hindi",
-  "Marathi",
-  "Gujarati",
-  "Bengali",
-  "Tamil",
-  "Telugu",
-  "Kannada",
-  "Malayalam",
-  "Punjabi",
-];
 
 /* =========================================================
    TRANSLATIONS
@@ -57,6 +43,11 @@ const translations = {
     tryDifferent:
       "Try a different IS code, standard name, or describe your requirement differently.",
     supportedLanguages: "Supported Languages",
+    bannerTag: "Smart Procurement",
+    bannerTitle: "Need personalized standard recommendations?",
+    bannerDesc:
+      "Describe your project requirements and let our AI engine find the exact BIS standards and compliance specifications you need.",
+    bannerBtn: "Get AI Recommendations",
   },
   Hindi: {
     indianStandards: "भारतीय मानक",
@@ -85,6 +76,11 @@ const translations = {
     tryDifferent:
       "कोई दूसरा IS कोड, मानक नाम या अलग तरीके से अपनी आवश्यकता लिखकर देखें।",
     supportedLanguages: "समर्थित भाषाएँ",
+    bannerTag: "स्मार्ट खरीद",
+    bannerTitle: "क्या आपको व्यक्तिगत मानक सिफारिशों की आवश्यकता है?",
+    bannerDesc:
+      "अपनी परियोजना की आवश्यकताओं का वर्णन करें और हमारे एआई इंजन को सटीक बीआईएस मानक खोजने दें।",
+    bannerBtn: "एआई सिफारिशें प्राप्त करें",
   },
   Marathi: {
     indianStandards: "भारतीय मानके",
@@ -113,6 +109,11 @@ const translations = {
     tryDifferent:
       "वेगळा IS कोड, मानकाचे नाव किंवा तुमची गरज वेगळ्या प्रकारे लिहून पहा.",
     supportedLanguages: "समर्थित भाषा",
+    bannerTag: "स्मार्ट खरेदी",
+    bannerTitle: "तुम्हाला वैयक्तिकृत मानक शिफारसी हव्या आहेत का?",
+    bannerDesc:
+      "तुमच्या प्रकल्पाच्या गरजांचे वर्णन करा आणि आमच्या AI इंजिनला आवश्यक BIS मानके शोधू द्या.",
+    bannerBtn: "AI शिफारसी मिळवा",
   },
   Gujarati: {
     indianStandards: "ભારતીય ધોરણો",
@@ -141,6 +142,11 @@ const translations = {
     tryDifferent:
       "અલગ IS કોડ, ધોરણનું નામ અથવા તમારી જરૂરિયાત અલગ રીતે લખીને જુઓ.",
     supportedLanguages: "સમર્થિત ભાષાઓ",
+    bannerTag: "સ્માર્ટ ખરીદી",
+    bannerTitle: "શું તમને વ્યક્તિગત ધોરણ ભલામણોની જરૂર છે?",
+    bannerDesc:
+      "તમારી પ્રોજેક્ટ જરૂરિયાતો વર્ણવો અને અમારા AI એન્જિનને BIS ધોરણો શોધવા દો.",
+    bannerBtn: "AI ભલામણો મેળવો",
   },
   Bengali: {
     indianStandards: "ভারতীয় মান",
@@ -169,6 +175,11 @@ const translations = {
     tryDifferent:
       "অন্য IS কোড, মানের নাম অথবা আপনার প্রয়োজন অন্যভাবে লিখে দেখুন।",
     supportedLanguages: "সমর্থিত ভাষা",
+    bannerTag: "স্মার্ট সংগ্রহ",
+    bannerTitle: "আপনার কি ব্যক্তিগতকৃত মান সুপারিশ প্রয়োজন?",
+    bannerDesc:
+      "আপনার প্রকল্পের প্রয়োজনীয়তা উল্লেখ করুন এবং আমাদের AI ইঞ্জিনকে BIS মান খুঁজতে দিন।",
+    bannerBtn: "AI সুপারিশ পান",
   },
   Tamil: {
     indianStandards: "இந்திய தரநிலைகள்",
@@ -197,6 +208,11 @@ const translations = {
     tryDifferent:
       "வேறு IS குறியீடு, தரநிலை பெயர் அல்லது உங்கள் தேவையை வேறு விதமாக உள்ளிடவும்.",
     supportedLanguages: "ஆதரிக்கப்படும் மொழிகள்",
+    bannerTag: "ஸ்மார்ட் கொள்முதல்",
+    bannerTitle: "உங்களுக்கு தனிப்பயனாக்கப்பட்ட தரநிலை பரிந்துரைகள் தேவையா?",
+    bannerDesc:
+      "உங்கள் திட்டத் தேவைகளை விவரிக்கவும், எங்கள் AI உங்களுக்குத் தேவையான BIS தரநிலைகளைக் கண்டறியட்டும்.",
+    bannerBtn: "AI பரிந்துரைகளைப் பெறவும்",
   },
   Telugu: {
     indianStandards: "భారతీయ ప్రమాణాలు",
@@ -225,6 +241,11 @@ const translations = {
     tryDifferent:
       "వేరే IS కోడ్, ప్రమాణం పేరు లేదా మీ అవసరాన్ని వేరే విధంగా ప్రయత్నించండి.",
     supportedLanguages: "మద్దతు ఉన్న భాషలు",
+    bannerTag: "స్మార్ట్ ప్రోక్యూర్మెంట్",
+    bannerTitle: "మీకు వ్యక్తిగతీకరించిన ప్రమాణ సిఫార్సులు కావాలా?",
+    bannerDesc:
+      "మీ ప్రాజెక్ట్ అవసరాలను వివరించండి మరియు మా AI ఇంజిన్ అవసరమైన BIS ప్రమాణాలను కనుగొననివ్వండి.",
+    bannerBtn: "AI సిఫార్సులను పొందండి",
   },
   Kannada: {
     indianStandards: "ಭಾರತೀಯ ಮಾನದಂಡಗಳು",
@@ -253,6 +274,11 @@ const translations = {
     tryDifferent:
       "ಬೇರೆ IS ಕೋಡ್, ಮಾನದಂಡದ ಹೆಸರು ಅಥವಾ ನಿಮ್ಮ ಅಗತ್ಯವನ್ನು ಬೇರೆ ರೀತಿಯಲ್ಲಿ ನಮೂದಿಸಿ.",
     supportedLanguages: "ಬೆಂಬಲಿತ ಭಾಷೆಗಳು",
+    bannerTag: "ಸ್ಮಾರ್ಟ್ ಸಂಗ್ರಹಣೆ",
+    bannerTitle: "ನಿಮಗೆ ಕಸ್ಟಮೈಸ್ ಮಾಡಿದ ಮಾನದಂಡದ ಶಿಫಾರಸುಗಳು ಬೇಕೇ?",
+    bannerDesc:
+      "ನಿಮ್ಮ ಪ್ರಾಜೆಕ್ಟ್ ಅಗತ್ಯಗಳನ್ನು ವಿವರಿಸಿ ಮತ್ತು ಸೂಕ್ತವಾದ BIS ಮಾನದಂಡಗಳನ್ನು ಹುಡುಕಲು ನಮ್ಮ AI ಎಂಜಿನ್‌ಗೆ ಬಿಡಿ.",
+    bannerBtn: "AI ಶಿಫಾರಸುಗಳನ್ನು ಪಡೆಯಿರಿ",
   },
   Malayalam: {
     indianStandards: "ഇന്ത്യൻ മാനദണ്ഡങ്ങൾ",
@@ -281,6 +307,11 @@ const translations = {
     tryDifferent:
       "മറ്റൊരു IS കോഡ്, മാനദണ്ഡത്തിന്റെ പേര് അല്ലെങ്കിൽ നിങ്ങളുടെ ആവശ്യകത മറ്റൊരു രീതിയിൽ നൽകുക.",
     supportedLanguages: "പിന്തുണയ്ക്കുന്ന ഭാഷകൾ",
+    bannerTag: "സ്മാർട്ട് പ്രൊക്യുർമെന്റ്",
+    bannerTitle: "നിങ്ങൾക്ക് വ്യക്തിഗത മാനദണ്ഡ ശുപാർശകൾ ആവശ്യമുണ്ടോ?",
+    bannerDesc:
+      "നിങ്ങളുടെ പ്രോജക്റ്റ് ആവശ്യകതകൾ വിവരിക്കുക, ഞങ്ങളുടെ AI എൻജിൻ കൃത്യമായ BIS മാനദണ്ഡങ്ങൾ കണ്ടെത്തട്ടെ.",
+    bannerBtn: "AI ശുപാർശകൾ നേടുക",
   },
   Punjabi: {
     indianStandards: "ਭਾਰਤੀ ਮਿਆਰ",
@@ -309,6 +340,11 @@ const translations = {
     tryDifferent:
       "ਕੋਈ ਹੋਰ IS ਕੋਡ, ਮਿਆਰ ਦਾ ਨਾਮ ਜਾਂ ਆਪਣੀ ਲੋੜ ਵੱਖਰੇ ਤਰੀਕੇ ਨਾਲ ਲਿਖੋ।",
     supportedLanguages: "ਸਮਰਥਿਤ ਭਾਸ਼ਾਵਾਂ",
+    bannerTag: "ਸਮਾਰਟ ਖਰੀਦਦਾਰੀ",
+    bannerTitle: "ਕੀ ਤੁਹਾਨੂੰ ਨਿੱਜੀ ਮਿਆਰੀ ਸਿਫ਼ਾਰਸ਼ਾਂ ਦੀ ਲੋੜ ਹੈ?",
+    bannerDesc:
+      "ਆਪਣੇ ਪ੍ਰੋਜੈਕਟ ਦੀਆਂ ਲੋੜਾਂ ਦੱਸੋ ਅਤੇ ਸਾਡੇ AI ਇੰਜਣ ਨੂੰ ਸਹੀ BIS ਮਿਆਰ ਲੱਭਣ ਦਿਓ।",
+    bannerBtn: "AI ਸਿਫ਼ਾਰਸ਼ਾਂ ਪ੍ਰਾਪਤ ਕਰੋ",
   },
 };
 
@@ -334,32 +370,27 @@ const standards = [
     `,
     translations: {
       English: {
-        title:
-          "Portable Fire Extinguishers — Performance and Construction",
+        title: "Portable Fire Extinguishers — Performance and Construction",
         description:
           "Specifies requirements for portable fire extinguishers including construction, performance and testing requirements.",
       },
       Hindi: {
-        title:
-          "पोर्टेबल अग्निशामक — प्रदर्शन और निर्माण",
+        title: "पोर्टेबल अग्निशामक — प्रदर्शन और निर्माण",
         description:
           "पोर्टेबल अग्निशामकों के निर्माण, प्रदर्शन और परीक्षण की आवश्यकताओं को निर्दिष्ट करता है।",
       },
       Marathi: {
-        title:
-          "पोर्टेबल अग्निशामक — कार्यक्षमता आणि बांधणी",
+        title: "पोर्टेबल अग्निशामक — कार्यक्षमता आणि बांधणी",
         description:
           "पोर्टेबल अग्निशामकांच्या बांधणी, कार्यक्षमता आणि चाचणीसाठी आवश्यक बाबी निर्दिष्ट करते.",
       },
       Gujarati: {
-        title:
-          "પોર્ટેબલ અગ્નિશામક — કામગીરી અને બાંધકામ",
+        title: "પોર્ટેબલ અગ્નિશામક — કામગીરી અને બાંધકામ",
         description:
           "પોર્ટેબલ અગ્નિશામકોના બાંધકામ, કામગીરી અને પરીક્ષણ માટેની આવશ્યકતાઓ નક્કી કરે છે.",
       },
       Bengali: {
-        title:
-          "পোর্টেবল অগ্নিনির্বাপক — কর্মক্ষমতা ও নির্মাণ",
+        title: "পোর্টেবল অগ্নিনির্বাপক — কর্মক্ষমতা ও নির্মাণ",
         description:
           "পোর্টেবল অগ্নিনির্বাপকের নির্মাণ, কর্মক্ষমতা এবং পরীক্ষার প্রয়োজনীয়তা নির্ধারণ করে।",
       },
@@ -370,8 +401,7 @@ const standards = [
           "கையடக்க தீயணைப்பான்களின் கட்டுமானம், செயல்திறன் மற்றும் சோதனைக்கான தேவைகளை குறிப்பிடுகிறது.",
       },
       Telugu: {
-        title:
-          "పోర్టబుల్ అగ్నిమాపకాలు — పనితీరు మరియు నిర్మాణం",
+        title: "పోర్టబుల్ అగ్నిమాపకాలు — పనితీరు మరియు నిర్మాణం",
         description:
           "పోర్టబుల్ అగ్నిమాపకాల నిర్మాణం, పనితీరు మరియు పరీక్ష అవసరాలను నిర్దేశిస్తుంది.",
       },
@@ -492,62 +522,52 @@ const standards = [
     `,
     translations: {
       English: {
-        title:
-          "Code of Practice for Electrical Wiring Installations",
+        title: "Code of Practice for Electrical Wiring Installations",
         description:
           "Covers requirements and recommendations for electrical wiring installations and associated equipment.",
       },
       Hindi: {
-        title:
-          "विद्युत वायरिंग प्रतिष्ठानों के लिए आचार संहिता",
+        title: "विद्युत वायरिंग प्रतिष्ठानों के लिए आचार संहिता",
         description:
           "विद्युत वायरिंग प्रतिष्ठानों और संबंधित उपकरणों के लिए आवश्यकताओं और सिफारिशों को शामिल करता है।",
       },
       Marathi: {
-        title:
-          "विद्युत वायरिंग स्थापनेसाठी आचारसंहिता",
+        title: "विद्युत वायरिंग स्थापनेसाठी आचारसंहिता",
         description:
           "विद्युत वायरिंग स्थापना आणि संबंधित उपकरणांसाठी आवश्यक बाबी आणि शिफारसी समाविष्ट करते.",
       },
       Gujarati: {
-        title:
-          "વિદ્યુત વાયરિંગ સ્થાપનો માટે પ્રેક્ટિસ કોડ",
+        title: "વિદ્યુત વાયરિંગ સ્થાપનો માટે પ્રેક્ટિસ કોડ",
         description:
           "વિદ્યુત વાયરિંગ સ્થાપનો અને સંબંધિત સાધનો માટેની આવશ્યકતાઓ અને ભલામણો આવરી લે છે.",
       },
       Bengali: {
-        title:
-          "বৈদ্যুতিক ওয়্যারিং স্থাপনার জন্য অনুশীলন বিধি",
+        title: "বৈদ্যুতিক ওয়্যারিং স্থাপনার জন্য অনুশীলন বিধি",
         description:
           "বৈদ্যুতিক ওয়্যারিং স্থাপনা এবং সংশ্লিষ্ট সরঞ্জামের প্রয়োজনীয়তা ও সুপারিশ অন্তর্ভুক্ত করে।",
       },
       Tamil: {
-        title:
-          "மின் வயரிங் நிறுவல்களுக்கான நடைமுறை விதிமுறை",
+        title: "மின் வயரிங் நிறுவல்களுக்கான நடைமுறை விதிமுறை",
         description:
           "மின் வயரிங் நிறுவல்கள் மற்றும் தொடர்புடைய உபகரணங்களுக்கான தேவைகள் மற்றும் பரிந்துரைகளை உள்ளடக்கியது.",
       },
       Telugu: {
-        title:
-          "విద్యుత్ వైరింగ్ సంస్థాపనల కోసం ప్రాక్టీస్ కోడ్",
+        title: "విద్యుత్ వైరింగ్ సంస్థాపనల కోసం ప్రాక్టీస్ కోడ్",
         description:
           "విద్యుత్ వైరింగ్ సంస్థాపనలు మరియు సంబంధిత పరికరాల అవసరాలు మరియు సిఫార్సులను కలిగి ఉంటుంది.",
       },
       Kannada: {
-        title:
-          "ವಿದ್ಯುತ್ ವೈರಿಂಗ್ ಅಳವಡಿಕೆಗಳಿಗಾಗಿ ಅಭ್ಯಾಸ ಸಂಹಿತೆ",
+        title: "ವಿದ್ಯುತ್ ವೈರಿಂಗ್ ಅಳವಡಿಕೆಗಳಿಗಾಗಿ ಅಭ್ಯಾಸ ಸಂಹಿತೆ",
         description:
           "ವಿದ್ಯುತ್ ವೈರಿಂಗ್ ಅಳವಡಿಕೆಗಳು ಮತ್ತು ಸಂಬಂಧಿತ ಸಾಧನಗಳ ಅವಶ್ಯಕತೆಗಳು ಹಾಗೂ ಶಿಫಾರಸುಗಳನ್ನು ಒಳಗೊಂಡಿದೆ.",
       },
       Malayalam: {
-        title:
-          "വൈദ്യുത വയറിംഗ് ഇൻസ്റ്റാളേഷനുകൾക്കുള്ള പ്രാക്ടീസ് കോഡ്",
+        title: "വൈദ്യുത വയറിംഗ് ഇൻസ്റ്റാളേഷനുകൾക്കുള്ള പ്രാക്ടീസ് കോഡ്",
         description:
           "വൈദ്യുത വയറിംഗ് ഇൻസ്റ്റാളേഷനുകൾക്കും അനുബന്ധ ഉപകരണങ്ങൾക്കുമുള്ള ആവശ്യകതകളും ശുപാർശകളും ഉൾക്കൊള്ളുന്നു.",
       },
       Punjabi: {
-        title:
-          "ਬਿਜਲੀ ਦੀ ਵਾਇਰਿੰਗ ਸਥਾਪਨਾਵਾਂ ਲਈ ਅਭਿਆਸ ਕੋਡ",
+        title: "ਬਿਜਲੀ ਦੀ ਵਾਇਰਿੰਗ ਸਥਾਪਨਾਵਾਂ ਲਈ ਅਭਿਆਸ ਕੋਡ",
         description:
           "ਬਿਜਲੀ ਦੀ ਵਾਇਰਿੰਗ ਸਥਾਪਨਾਵਾਂ ਅਤੇ ਸੰਬੰਧਿਤ ਉਪਕਰਣਾਂ ਲਈ ਲੋੜਾਂ ਅਤੇ ਸਿਫ਼ਾਰਸ਼ਾਂ ਸ਼ਾਮਲ ਕਰਦਾ ਹੈ।",
       },
@@ -571,32 +591,27 @@ const standards = [
     `,
     translations: {
       English: {
-        title:
-          "Hot Rolled Medium and High Tensile Structural Steel",
+        title: "Hot Rolled Medium and High Tensile Structural Steel",
         description:
           "Specifies requirements for structural steel products used in construction and engineering applications.",
       },
       Hindi: {
-        title:
-          "हॉट रोल्ड मध्यम और उच्च तन्यता वाला संरचनात्मक इस्पात",
+        title: "हॉट रोल्ड मध्यम और उच्च तन्यता वाला संरचनात्मक इस्पात",
         description:
           "निर्माण और इंजीनियरिंग में उपयोग किए जाने वाले संरचनात्मक इस्पात उत्पादों की आवश्यकताओं को निर्दिष्ट करता है।",
       },
       Marathi: {
-        title:
-          "हॉट रोल्ड मध्यम आणि उच्च तन्यता असलेले संरचनात्मक स्टील",
+        title: "हॉट रोल्ड मध्यम आणि उच्च तन्यता असलेले संरचनात्मक स्टील",
         description:
           "बांधकाम आणि अभियांत्रिकीमध्ये वापरल्या जाणाऱ्या संरचनात्मक स्टील उत्पादनांसाठी आवश्यक बाबी निर्दिष्ट करते.",
       },
       Gujarati: {
-        title:
-          "હોટ રોલ્ડ મધ્યમ અને ઉચ્ચ તાણવાળું સ્ટ્રક્ચરલ સ્ટીલ",
+        title: "હોટ રોલ્ડ મધ્યમ અને ઉચ્ચ તાણવાળું સ્ટ્રક્ચરલ સ્ટીલ",
         description:
           "બાંધકામ અને એન્જિનિયરિંગમાં ઉપયોગમાં લેવાતા સ્ટ્રક્ચરલ સ્ટીલ ઉત્પાદનો માટેની આવશ્યકતાઓ નક્કી કરે છે.",
       },
       Bengali: {
-        title:
-          "হট রোল্ড মাঝারি ও উচ্চ টেনসাইল স্ট্রাকচারাল স্টিল",
+        title: "হট রোল্ড মাঝারি ও উচ্চ টেনসাইল স্ট্রাকচারাল স্টিল",
         description:
           "নির্মাণ ও প্রকৌশল কাজে ব্যবহৃত স্ট্রাকচারাল স্টিল পণ্যের প্রয়োজনীয়তা নির্ধারণ করে।",
       },
@@ -607,8 +622,7 @@ const standards = [
           "கட்டுமானம் மற்றும் பொறியியல் பயன்பாடுகளில் பயன்படுத்தப்படும் கட்டமைப்பு எஃகு தயாரிப்புகளுக்கான தேவைகளை குறிப்பிடுகிறது.",
       },
       Telugu: {
-        title:
-          "హాట్ రోల్డ్ మీడియం మరియు హై టెన్సైల్ స్ట్రక్చరల్ స్టీల్",
+        title: "హాట్ రోల్డ్ మీడియం మరియు హై టెన్సైల్ స్ట్రక్చరల్ స్టీల్",
         description:
           "నిర్మాణ మరియు ఇంజినీరింగ్ ఉపయోగాలలో ఉపయోగించే స్ట్రక్చరల్ స్టీల్ ఉత్పత్తుల అవసరాలను నిర్దేశిస్తుంది.",
       },
@@ -619,14 +633,12 @@ const standards = [
           "ನಿರ್ಮಾಣ ಮತ್ತು ಎಂಜಿನಿಯರಿಂಗ್ ಬಳಕೆಯಲ್ಲಿರುವ ರಚನಾತ್ಮಕ ಉಕ್ಕಿನ ಉತ್ಪನ್ನಗಳ ಅವಶ್ಯಕತೆಗಳನ್ನು ನಿರ್ದಿಷ್ಟಪಡಿಸುತ್ತದೆ.",
       },
       Malayalam: {
-        title:
-          "ഹോട്ട് റോൾഡ് മീഡിയം, ഹൈ ടെൻസൈൽ സ്ട്രക്ചറൽ സ്റ്റീൽ",
+        title: "ഹോട്ട് റോൾഡ് മീഡിയം, ഹൈ ടെൻസൈൽ സ്ട്രക്ചറൽ സ്റ്റീൽ",
         description:
           "നിർമ്മാണത്തിലും എഞ്ചിനീയറിംഗ് ഉപയോഗങ്ങളിലും ഉപയോഗിക്കുന്ന സ്ട്രക്ചറൽ സ്റ്റീൽ ഉൽപ്പന്നങ്ങളുടെ ആവശ്യകതകൾ വ്യക്തമാക്കുന്നു.",
       },
       Punjabi: {
-        title:
-          "ਹਾਟ ਰੋਲਡ ਮੀਡੀਅਮ ਅਤੇ ਹਾਈ ਟੈਂਸਾਈਲ ਸਟ੍ਰਕਚਰਲ ਸਟੀਲ",
+        title: "ਹਾਟ ਰੋਲਡ ਮੀਡੀਅਮ ਅਤੇ ਹਾਈ ਟੈਂਸਾਈਲ ਸਟ੍ਰਕਚਰਲ ਸਟੀਲ",
         description:
           "ਨਿਰਮਾਣ ਅਤੇ ਇੰਜੀਨੀਅਰਿੰਗ ਵਿੱਚ ਵਰਤੇ ਜਾਣ ਵਾਲੇ ਸਟ੍ਰਕਚਰਲ ਸਟੀਲ ਉਤਪਾਦਾਂ ਦੀਆਂ ਲੋੜਾਂ ਦੱਸਦਾ ਹੈ।",
       },
@@ -637,10 +649,7 @@ const standards = [
 /* =========================================================
    CATEGORY TRANSLATIONS
 ========================================================= */
-const categoryKeyMap: Record<
-  string,
-  keyof typeof translations.English
-> = {
+const categoryKeyMap: Record<string, keyof typeof translations.English> = {
   "All Standards": "allStandards",
   Construction: "construction",
   Electrical: "electrical",
@@ -659,18 +668,37 @@ const categories = [
 ];
 
 /* =========================================================
-   PAGE
+   PAGE COMPONENT
 ========================================================= */
 export default function SearchPage() {
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Standards");
-  const [language, setLanguage] = useState("English");
-  const [showLanguages, setShowLanguages] = useState(false);
 
-  const t = translations[language as keyof typeof translations];
+  // Synchronize language state with top URL query param controlled by main header
+  const langCode = searchParams.get("lang") || "EN";
+
+  const langCodeToLabelMap: Record<string, string> = {
+    EN: "English",
+    HI: "Hindi",
+    MR: "Marathi",
+    GU: "Gujarati",
+    BN: "Bengali",
+    TA: "Tamil",
+    TE: "Telugu",
+    KN: "Kannada",
+    ML: "Malayalam",
+    PA: "Punjabi",
+  };
+
+  const language = langCodeToLabelMap[langCode] || "English";
+
+  const t =
+    translations[language as keyof typeof translations] ||
+    translations["English"];
 
   /* =======================================================
-     SEARCH
+     SEARCH FILTER
   ======================================================= */
   const filteredStandards = standards.filter((standard) => {
     const searchQuery = query.toLowerCase().trim();
@@ -685,70 +713,26 @@ export default function SearchPage() {
   });
 
   return (
-    <main
-      className="min-h-screen bg-[#FBF8F4] text-[#211735]"
-      lang={language}
-    >
+    <main className="min-h-screen bg-[#FBF8F4] text-[#211735]" lang={langCode}>
       {/* PAGE CONTENT */}
       <section className="mx-auto max-w-[1150px] px-8 py-14">
-        {/* HEADING & MULTILINGUAL PICKER */}
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
-          <div className="max-w-[760px]">
-            <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-[#A35A91]">
-              <span className="h-px w-8 bg-[#A35A91]" />
-              {t.indianStandards}
-            </div>
-            <h1 className="font-serif text-5xl leading-[1.05] tracking-[-0.03em]">
-              {t.findRight}
-              <br />
-              <span className="text-[#74478A]">{t.standard}</span>
-            </h1>
-            <p className="mt-6 max-w-[650px] text-[17px] leading-8 text-[#706578]">
-              {t.description}
-            </p>
+        {/* HEADING SECTION */}
+        <div className="max-w-[760px]">
+          <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-[#A35A91]">
+            <span className="h-px w-8 bg-[#A35A91]" />
+            {t.indianStandards}
           </div>
-
-          {/* MULTILINGUAL LANGUAGE SELECTOR */}
-          <div className="relative shrink-0 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowLanguages(!showLanguages)}
-              className="flex items-center gap-2 rounded-full border border-[#DED2CE] bg-white px-5 py-2.5 text-xs font-medium text-[#493D50] shadow-sm transition hover:border-[#BFA6BD]"
-            >
-              <Languages size={16} className="text-[#74478A]" />
-              <span>{language}</span>
-            </button>
-
-            {showLanguages && (
-              <div className="absolute right-0 top-14 z-50 w-56 rounded-2xl border border-[#E4DAD5] bg-white p-3 shadow-[0_12px_35px_rgba(116,71,138,0.12)]">
-                <p className="px-3 pb-2 text-[10px] uppercase tracking-[0.18em] text-[#A35A91]">
-                  {t.supportedLanguages}
-                </p>
-                <div className="grid grid-cols-2 gap-1">
-                  {languages.map((item) => (
-                    <button
-                      type="button"
-                      key={item}
-                      onClick={() => {
-                        setLanguage(item);
-                        setShowLanguages(false);
-                      }}
-                      className={`rounded-lg px-3 py-2 text-left text-xs transition ${
-                        language === item
-                          ? "bg-[#EDE0EC] font-medium text-[#74478A]"
-                          : "text-[#706578] hover:bg-[#F5EEF5]"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <h1 className="font-serif text-5xl leading-[1.05] tracking-[-0.03em]">
+            {t.findRight}
+            <br />
+            <span className="text-[#74478A]">{t.standard}</span>
+          </h1>
+          <p className="mt-6 max-w-[650px] text-[17px] leading-8 text-[#706578]">
+            {t.description}
+          </p>
         </div>
 
-        {/* SEARCH BOX */}
+        {/* SEARCH BOX & MULTILINGUAL INDICATOR */}
         <div className="mt-10">
           <div className="flex h-[64px] items-center gap-4 rounded-[18px] border border-[#D9C7D6] bg-white px-5 shadow-[0_8px_30px_rgba(116,71,138,0.05)] focus-within:border-[#A35A91]">
             <Search
@@ -771,7 +755,6 @@ export default function SearchPage() {
             </button>
           </div>
 
-          {/* LANGUAGE INFO */}
           <div className="mt-3 flex items-center gap-2 text-xs text-[#806D7B]">
             <Languages size={14} className="text-[#A35A91]" />
             <span>{t.multilingual}</span>
@@ -781,9 +764,9 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* CONTENT */}
+        {/* MAIN LAYOUT */}
         <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
-          {/* FILTERS */}
+          {/* SIDEBAR FILTERS */}
           <aside>
             <div className="mb-5 flex items-center gap-2">
               <SlidersHorizontal size={17} className="text-[#74478A]" />
@@ -812,7 +795,7 @@ export default function SearchPage() {
             </div>
           </aside>
 
-          {/* RESULTS */}
+          {/* RESULTS COLUMN */}
           <div>
             <div className="mb-5 flex items-center justify-between">
               <p className="text-sm text-[#806D7B]">
@@ -831,14 +814,13 @@ export default function SearchPage() {
               </button>
             </div>
 
-            {/* STANDARD CARDS */}
+            {/* STANDARD CARDS LIST */}
             <div className="space-y-4">
               {filteredStandards.map((standard) => {
                 const translated =
                   standard.translations[
                     language as keyof typeof standard.translations
                   ] || standard.translations.English;
-
                 return (
                   <article
                     key={standard.code}
@@ -898,15 +880,39 @@ export default function SearchPage() {
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EDE0EC] text-[#74478A]">
                     <Search size={22} />
                   </div>
-                  <h3 className="mt-5 font-serif text-2xl">
-                    {t.noStandards}
-                  </h3>
+                  <h3 className="mt-5 font-serif text-2xl">{t.noStandards}</h3>
                   <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#806D7B]">
                     {t.tryDifferent}
                   </p>
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* BOTTOM AI RECOMMENDATIONS BANNER */}
+        <div className="mt-14 overflow-hidden rounded-[28px] bg-[#683C74] p-8 text-white shadow-lg md:p-10">
+          <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div className="max-w-xl">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#D3B4D8]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D3B4D8]"></span>
+                {t.bannerTag}
+              </div>
+              <h3 className="mt-3 font-serif text-3xl font-normal leading-tight text-white md:text-3xl">
+                {t.bannerTitle}
+              </h3>
+              <p className="mt-3 text-xs leading-relaxed text-[#E2D2E6]">
+                {t.bannerDesc}
+              </p>
+            </div>
+
+            <Link
+              href="/recommendations"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3 text-xs font-medium text-[#683C74] transition hover:bg-[#FAF6F0]"
+            >
+              <span>{t.bannerBtn}</span>
+              <ArrowUpRight size={16} />
+            </Link>
           </div>
         </div>
       </section>
