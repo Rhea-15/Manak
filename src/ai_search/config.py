@@ -78,5 +78,26 @@ class AISearchSettings:
     # Ingestion
     max_upload_file_size_mb: int = field(default_factory=lambda: _env_int("MAX_UPLOAD_FILE_SIZE_MB", 100))
 
+    def __post_init__(self) -> None:
+        """Fail fast on invalid generation settings at startup.
+
+        Without this, TRANSLATION_MAX_LENGTH<=0 or TRANSLATION_NUM_BEAMS<=0
+        would only surface deep inside model.generate() — and translate()
+        catches that and silently returns the original query, while
+        normalize_query() still reports is_translation=True as if
+        translation had succeeded. Reject invalid values immediately
+        instead of letting that mask a broken config.
+        """
+        if self.translation_max_length <= 0:
+            raise ValueError(
+                "TRANSLATION_MAX_LENGTH must be a positive integer, "
+                f"got {self.translation_max_length}"
+            )
+        if self.translation_num_beams <= 0:
+            raise ValueError(
+                "TRANSLATION_NUM_BEAMS must be a positive integer, "
+                f"got {self.translation_num_beams}"
+            )
+
 
 settings = AISearchSettings()

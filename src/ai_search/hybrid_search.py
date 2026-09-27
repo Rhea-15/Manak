@@ -5,6 +5,7 @@ Combines dense vector search with BM25 lexical search
 
 import logging
 from dataclasses import dataclass
+from src.ai_search.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class SearchResult:
 class ReciprocalRankFusion:
     """RRF algorithm for combining multiple ranked lists"""
 
-    def __init__(self, k: int = 60):
+    def __init__(self, k: int = settings.rrf_k):
         """
         Initialize RRF.
         
@@ -111,7 +112,7 @@ class ReciprocalRankFusion:
 class HybridSearchEngine:
     """Orchestrate hybrid vector + lexical search"""
 
-    def __init__(self, vector_weight: float = 0.5, bm25_weight: float = 0.5):
+    def __init__(self,vector_weight: float = settings.hybrid_vector_weight,bm25_weight: float = settings.hybrid_bm25_weight,):
         """
         Initialize hybrid engine.
         
@@ -124,7 +125,7 @@ class HybridSearchEngine:
         
         self.vector_weight = vector_weight
         self.bm25_weight = bm25_weight
-        self.rrf = ReciprocalRankFusion()
+        self.rrf = ReciprocalRankFusion(k=settings.rrf_k)
         self.logger = logging.getLogger(__name__)
 
     def search_rrf(

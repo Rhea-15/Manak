@@ -229,6 +229,10 @@ class TestGenerationConfigNoHardcoding:
         translator.tokenizer = _StubTokenizer()
         translator.model = _StubModel()
 
+        # Capture initial values before mutation
+        previous_max_length = settings.translation_max_length
+        previous_num_beams = settings.translation_num_beams
+
         # Patch settings imported in translation module using object.__setattr__
         # to bypass the dataclass frozen restriction
         object.__setattr__(settings, "translation_max_length", 128)
@@ -250,6 +254,29 @@ class TestGenerationConfigNoHardcoding:
             assert captured.get("max_length") == 128
             assert captured.get("num_beams") == 2
         finally:
-            # Restore default values after test execution
-            object.__setattr__(settings, "translation_max_length", 512)
-            object.__setattr__(settings, "translation_num_beams", 4)
+            # Restore original values captured before the test run
+            object.__setattr__(settings, "translation_max_length", previous_max_length)
+            object.__setattr__(settings, "translation_num_beams", previous_num_beams)
+    def test_rejects_nonpositive_max_length(self):
+        import os
+
+        from src.ai_search.config import AISearchSettings
+
+        os.environ["TRANSLATION_MAX_LENGTH"] = "0"
+        try:
+            with pytest.raises(ValueError, match="TRANSLATION_MAX_LENGTH"):
+                AISearchSettings()
+        finally:
+            del os.environ["TRANSLATION_MAX_LENGTH"]
+
+    def test_rejects_negative_num_beams(self):
+        import os
+
+        from src.ai_search.config import AISearchSettings
+
+        os.environ["TRANSLATION_NUM_BEAMS"] = "-1"
+        try:
+            with pytest.raises(ValueError, match="TRANSLATION_NUM_BEAMS"):
+                AISearchSettings()
+        finally:
+            del os.environ["TRANSLATION_NUM_BEAMS"]
