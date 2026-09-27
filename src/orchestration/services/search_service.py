@@ -128,6 +128,7 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
 
             results.append(
                 {
+                    "standard_id": standard.id,
                     "standard_number": standard.standard_number,
                     "title": standard.title,
                     "score": item.get("score", 0.0),
