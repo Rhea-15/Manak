@@ -5,6 +5,7 @@ Combines dense vector search with BM25 lexical search
 
 import logging
 from dataclasses import dataclass
+
 from src.ai_search.config import settings
 
 logger = logging.getLogger(__name__)
