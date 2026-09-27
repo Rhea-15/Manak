@@ -8,14 +8,10 @@ import {
   ShieldCheck,
   Upload,
 } from "lucide-react";
-import Header from "@/components/header";
 
 export default function Home() {
   return (
     <div className="min-h-screen overflow-hidden bg-[#fbf7f1] text-[#281b3b]">
-
-      {/* HEADER */}
-      <Header />
 
       {/* HERO */}
       <section className="relative min-h-[760px] px-6 pt-24">
@@ -214,7 +210,6 @@ export default function Home() {
     </div>
   );
 }
-
 
 /* -------------------------------- */
 /* FEATURE CARD COMPONENT */

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Search,
   ArrowUpRight,
@@ -8,12 +9,10 @@ import {
   ChevronRight,
   Languages,
 } from "lucide-react";
-import { useState } from "react";
 
 /* =========================================================
    LANGUAGES
 ========================================================= */
-
 const languages = [
   "English",
   "Hindi",
@@ -30,7 +29,6 @@ const languages = [
 /* =========================================================
    TRANSLATIONS
 ========================================================= */
-
 const translations = {
   English: {
     indianStandards: "Indian Standards",
@@ -60,7 +58,6 @@ const translations = {
       "Try a different IS code, standard name, or describe your requirement differently.",
     supportedLanguages: "Supported Languages",
   },
-
   Hindi: {
     indianStandards: "भारतीय मानक",
     findRight: "सही",
@@ -89,7 +86,6 @@ const translations = {
       "कोई दूसरा IS कोड, मानक नाम या अलग तरीके से अपनी आवश्यकता लिखकर देखें।",
     supportedLanguages: "समर्थित भाषाएँ",
   },
-
   Marathi: {
     indianStandards: "भारतीय मानके",
     findRight: "योग्य",
@@ -118,7 +114,6 @@ const translations = {
       "वेगळा IS कोड, मानकाचे नाव किंवा तुमची गरज वेगळ्या प्रकारे लिहून पहा.",
     supportedLanguages: "समर्थित भाषा",
   },
-
   Gujarati: {
     indianStandards: "ભારતીય ધોરણો",
     findRight: "યોગ્ય",
@@ -147,7 +142,6 @@ const translations = {
       "અલગ IS કોડ, ધોરણનું નામ અથવા તમારી જરૂરિયાત અલગ રીતે લખીને જુઓ.",
     supportedLanguages: "સમર્થિત ભાષાઓ",
   },
-
   Bengali: {
     indianStandards: "ভারতীয় মান",
     findRight: "সঠিক",
@@ -176,7 +170,6 @@ const translations = {
       "অন্য IS কোড, মানের নাম অথবা আপনার প্রয়োজন অন্যভাবে লিখে দেখুন।",
     supportedLanguages: "সমর্থিত ভাষা",
   },
-
   Tamil: {
     indianStandards: "இந்திய தரநிலைகள்",
     findRight: "சரியான",
@@ -205,7 +198,6 @@ const translations = {
       "வேறு IS குறியீடு, தரநிலை பெயர் அல்லது உங்கள் தேவையை வேறு விதமாக உள்ளிடவும்.",
     supportedLanguages: "ஆதரிக்கப்படும் மொழிகள்",
   },
-
   Telugu: {
     indianStandards: "భారతీయ ప్రమాణాలు",
     findRight: "సరైన",
@@ -234,7 +226,6 @@ const translations = {
       "వేరే IS కోడ్, ప్రమాణం పేరు లేదా మీ అవసరాన్ని వేరే విధంగా ప్రయత్నించండి.",
     supportedLanguages: "మద్దతు ఉన్న భాషలు",
   },
-
   Kannada: {
     indianStandards: "ಭಾರತೀಯ ಮಾನದಂಡಗಳು",
     findRight: "ಸರಿಯಾದ",
@@ -263,7 +254,6 @@ const translations = {
       "ಬೇರೆ IS ಕೋಡ್, ಮಾನದಂಡದ ಹೆಸರು ಅಥವಾ ನಿಮ್ಮ ಅಗತ್ಯವನ್ನು ಬೇರೆ ರೀತಿಯಲ್ಲಿ ನಮೂದಿಸಿ.",
     supportedLanguages: "ಬೆಂಬಲಿತ ಭಾಷೆಗಳು",
   },
-
   Malayalam: {
     indianStandards: "ഇന്ത്യൻ മാനദണ്ഡങ്ങൾ",
     findRight: "ശരിയായ",
@@ -292,7 +282,6 @@ const translations = {
       "മറ്റൊരു IS കോഡ്, മാനദണ്ഡത്തിന്റെ പേര് അല്ലെങ്കിൽ നിങ്ങളുടെ ആവശ്യകത മറ്റൊരു രീതിയിൽ നൽകുക.",
     supportedLanguages: "പിന്തുണയ്ക്കുന്ന ഭാഷകൾ",
   },
-
   Punjabi: {
     indianStandards: "ਭਾਰਤੀ ਮਿਆਰ",
     findRight: "ਸਹੀ",
@@ -326,7 +315,6 @@ const translations = {
 /* =========================================================
    STANDARD DATA
 ========================================================= */
-
 const standards = [
   {
     code: "IS 15683:2018",
@@ -407,7 +395,6 @@ const standards = [
       },
     },
   },
-
   {
     code: "IS 2190:2024",
     category: "Fire Safety",
@@ -487,7 +474,6 @@ const standards = [
       },
     },
   },
-
   {
     code: "IS 732:2019",
     category: "Electrical",
@@ -567,7 +553,6 @@ const standards = [
       },
     },
   },
-
   {
     code: "IS 2062:2011",
     category: "Construction",
@@ -652,7 +637,6 @@ const standards = [
 /* =========================================================
    CATEGORY TRANSLATIONS
 ========================================================= */
-
 const categoryKeyMap: Record<
   string,
   keyof typeof translations.English
@@ -677,264 +661,144 @@ const categories = [
 /* =========================================================
    PAGE
 ========================================================= */
-
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] =
-    useState("All Standards");
+  const [activeCategory, setActiveCategory] = useState("All Standards");
   const [language, setLanguage] = useState("English");
   const [showLanguages, setShowLanguages] = useState(false);
 
-  const t =
-    translations[
-      language as keyof typeof translations
-    ];
+  const t = translations[language as keyof typeof translations];
 
   /* =======================================================
      SEARCH
   ======================================================= */
-
-  const filteredStandards = standards.filter(
-    (standard) => {
-      const searchQuery =
-        query.toLowerCase().trim();
-
-      const matchesSearch =
-        !searchQuery ||
-        standard.code
-          .toLowerCase()
-          .includes(searchQuery) ||
-        standard.keywords
-          .toLowerCase()
-          .includes(searchQuery);
-
-      const matchesCategory =
-        activeCategory === "All Standards" ||
-        standard.category === activeCategory;
-
-      return matchesSearch && matchesCategory;
-    }
-  );
+  const filteredStandards = standards.filter((standard) => {
+    const searchQuery = query.toLowerCase().trim();
+    const matchesSearch =
+      !searchQuery ||
+      standard.code.toLowerCase().includes(searchQuery) ||
+      standard.keywords.toLowerCase().includes(searchQuery);
+    const matchesCategory =
+      activeCategory === "All Standards" ||
+      standard.category === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <main
       className="min-h-screen bg-[#FBF8F4] text-[#211735]"
       lang={language}
     >
-      {/* =================================================
-          HEADER
-      ================================================= */}
-
-      <header className="border-b border-[#E7DDD7] bg-[#FBF8F4]">
-        <div className="mx-auto flex h-[76px] max-w-[1400px] items-center justify-between px-8">
-
-          {/* MANAK LOGO */}
-
-          <a
-            href="/"
-            className="flex items-center gap-3"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#74478A] font-serif text-white">
-              M
-            </div>
-
-            <div>
-              <div className="font-serif text-xl tracking-wide">
-                MANAK
-              </div>
-
-              <div className="text-[8px] uppercase tracking-[0.22em] text-[#806D7B]">
-                AI for Smarter Procurement
-              </div>
-            </div>
-          </a>
-
-          {/* RIGHT SIDE */}
-
-          <div className="flex items-center gap-3">
-
-            {/* MULTIPLE LANGUAGES */}
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() =>
-                  setShowLanguages(!showLanguages)
-                }
-                className="flex items-center gap-2 rounded-full border border-[#DED2CE] bg-white/60 px-4 py-2 text-xs text-[#493D50] transition hover:border-[#BFA6BD]"
-              >
-                <Languages
-                  size={15}
-                  className="text-[#74478A]"
-                />
-
-                <span>
-                  Multiple Languages
-                </span>
-              </button>
-
-              {showLanguages && (
-                <div className="absolute right-0 top-12 z-50 w-56 rounded-2xl border border-[#E4DAD5] bg-white p-3 shadow-[0_12px_35px_rgba(116,71,138,0.12)]">
-
-                  <p className="px-3 pb-2 text-[10px] uppercase tracking-[0.18em] text-[#A35A91]">
-                    {t.supportedLanguages}
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-1">
-                    {languages.map((item) => (
-                      <button
-                        type="button"
-                        key={item}
-                        onClick={() => {
-                          setLanguage(item);
-                          setShowLanguages(false);
-                        }}
-                        className={`rounded-lg px-3 py-2 text-left text-xs transition ${
-                          language === item
-                            ? "bg-[#EDE0EC] font-medium text-[#74478A]"
-                            : "text-[#706578] hover:bg-[#F5EEF5]"
-                        }`}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-
-                </div>
-              )}
-            </div>
-
-            {/* PROFILE */}
-
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#A35A91] text-xs text-white">
-              RS
-            </div>
-
-          </div>
-        </div>
-      </header>
-
-      {/* =================================================
-          PAGE
-      ================================================= */}
-
+      {/* PAGE CONTENT */}
       <section className="mx-auto max-w-[1150px] px-8 py-14">
-
-        {/* HEADING */}
-
-        <div className="max-w-[760px]">
-
-          <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-[#A35A91]">
-            <span className="h-px w-8 bg-[#A35A91]" />
-            {t.indianStandards}
+        {/* HEADING & MULTILINGUAL PICKER */}
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
+          <div className="max-w-[760px]">
+            <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-[#A35A91]">
+              <span className="h-px w-8 bg-[#A35A91]" />
+              {t.indianStandards}
+            </div>
+            <h1 className="font-serif text-5xl leading-[1.05] tracking-[-0.03em]">
+              {t.findRight}
+              <br />
+              <span className="text-[#74478A]">{t.standard}</span>
+            </h1>
+            <p className="mt-6 max-w-[650px] text-[17px] leading-8 text-[#706578]">
+              {t.description}
+            </p>
           </div>
 
-          <h1 className="font-serif text-5xl leading-[1.05] tracking-[-0.03em]">
-            {t.findRight}
-            <br />
-            <span className="text-[#74478A]">
-              {t.standard}
-            </span>
-          </h1>
+          {/* MULTILINGUAL LANGUAGE SELECTOR */}
+          <div className="relative shrink-0 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowLanguages(!showLanguages)}
+              className="flex items-center gap-2 rounded-full border border-[#DED2CE] bg-white px-5 py-2.5 text-xs font-medium text-[#493D50] shadow-sm transition hover:border-[#BFA6BD]"
+            >
+              <Languages size={16} className="text-[#74478A]" />
+              <span>{language}</span>
+            </button>
 
-          <p className="mt-6 max-w-[650px] text-[17px] leading-8 text-[#706578]">
-            {t.description}
-          </p>
-
+            {showLanguages && (
+              <div className="absolute right-0 top-14 z-50 w-56 rounded-2xl border border-[#E4DAD5] bg-white p-3 shadow-[0_12px_35px_rgba(116,71,138,0.12)]">
+                <p className="px-3 pb-2 text-[10px] uppercase tracking-[0.18em] text-[#A35A91]">
+                  {t.supportedLanguages}
+                </p>
+                <div className="grid grid-cols-2 gap-1">
+                  {languages.map((item) => (
+                    <button
+                      type="button"
+                      key={item}
+                      onClick={() => {
+                        setLanguage(item);
+                        setShowLanguages(false);
+                      }}
+                      className={`rounded-lg px-3 py-2 text-left text-xs transition ${
+                        language === item
+                          ? "bg-[#EDE0EC] font-medium text-[#74478A]"
+                          : "text-[#706578] hover:bg-[#F5EEF5]"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* =================================================
-            SEARCH BOX
-        ================================================= */}
-
+        {/* SEARCH BOX */}
         <div className="mt-10">
-
           <div className="flex h-[64px] items-center gap-4 rounded-[18px] border border-[#D9C7D6] bg-white px-5 shadow-[0_8px_30px_rgba(116,71,138,0.05)] focus-within:border-[#A35A91]">
-
             <Search
               size={22}
               strokeWidth={1.7}
               className="shrink-0 text-[#74478A]"
             />
-
             <input
               type="text"
               value={query}
-              onChange={(e) =>
-                setQuery(e.target.value)
-              }
+              onChange={(e) => setQuery(e.target.value)}
               placeholder={t.placeholder}
               className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#211735] outline-none placeholder:text-[#A3989D]"
             />
-
             <button
               type="button"
-              onClick={() => {}}
               className="hidden rounded-xl bg-[#74478A] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#653C78] sm:block"
             >
               {t.search}
             </button>
-
           </div>
 
           {/* LANGUAGE INFO */}
-
           <div className="mt-3 flex items-center gap-2 text-xs text-[#806D7B]">
-
-            <Languages
-              size={14}
-              className="text-[#A35A91]"
-            />
-
-            <span>
-              {t.multilingual}
-            </span>
-
+            <Languages size={14} className="text-[#A35A91]" />
+            <span>{t.multilingual}</span>
             <span className="font-medium text-[#74478A]">
               {t.tenLanguages}
             </span>
-
           </div>
-
         </div>
 
-        {/* =================================================
-            CONTENT
-        ================================================= */}
-
+        {/* CONTENT */}
         <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]">
-
           {/* FILTERS */}
-
           <aside>
-
             <div className="mb-5 flex items-center gap-2">
-
-              <SlidersHorizontal
-                size={17}
-                className="text-[#74478A]"
-              />
-
+              <SlidersHorizontal size={17} className="text-[#74478A]" />
               <h2 className="text-sm font-medium text-[#211735]">
                 {t.categories}
               </h2>
-
             </div>
-
             <div className="space-y-1">
-
               {categories.map((category) => {
-
-                const categoryKey =
-                  categoryKeyMap[category];
-
+                const categoryKey = categoryKeyMap[category];
                 return (
                   <button
                     type="button"
                     key={category}
-                    onClick={() =>
-                      setActiveCategory(category)
-                    }
+                    onClick={() => setActiveCategory(category)}
                     className={`w-full rounded-xl px-4 py-3 text-left text-sm transition ${
                       activeCategory === category
                         ? "bg-[#EDE0EC] font-medium text-[#74478A]"
@@ -944,29 +808,20 @@ export default function SearchPage() {
                     {t[categoryKey] as string}
                   </button>
                 );
-
               })}
-
             </div>
-
           </aside>
 
           {/* RESULTS */}
-
           <div>
-
             <div className="mb-5 flex items-center justify-between">
-
               <p className="text-sm text-[#806D7B]">
                 {t.showing}{" "}
-
                 <span className="font-medium text-[#493D50]">
                   {filteredStandards.length}
                 </span>{" "}
-
                 {t.standards}
               </p>
-
               <button
                 type="button"
                 className="flex items-center gap-2 text-xs text-[#806D7B]"
@@ -974,75 +829,46 @@ export default function SearchPage() {
                 {t.relevance}
                 <ChevronRight size={14} />
               </button>
-
             </div>
 
             {/* STANDARD CARDS */}
-
             <div className="space-y-4">
-
               {filteredStandards.map((standard) => {
-
                 const translated =
                   standard.translations[
                     language as keyof typeof standard.translations
-                  ] ||
-                  standard.translations.English;
+                  ] || standard.translations.English;
 
                 return (
                   <article
                     key={standard.code}
                     className="group rounded-[22px] border border-[#E4DAD5] bg-white p-7 transition duration-200 hover:-translate-y-0.5 hover:border-[#C5A7C2] hover:shadow-[0_12px_35px_rgba(116,71,138,0.07)]"
                   >
-
                     <div className="flex items-start justify-between gap-5">
-
                       <div className="flex gap-5">
-
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#F0E3EF] text-[#74478A]">
-
-                          <BookOpen
-                            size={21}
-                            strokeWidth={1.6}
-                          />
-
+                          <BookOpen size={21} strokeWidth={1.6} />
                         </div>
-
                         <div>
-
                           <div className="flex flex-wrap items-center gap-3">
-
                             <span className="font-medium text-[#74478A]">
                               {standard.code}
                             </span>
-
                             <span className="rounded-full bg-[#F2EEE8] px-3 py-1 text-[10px] text-[#806D7B]">
-                              {
-                                t[
-                                  categoryKeyMap[
-                                    standard.category
-                                  ]
-                                ] as string
-                              }
+                              {t[categoryKeyMap[standard.category]] as string}
                             </span>
-
                             <span className="rounded-full bg-[#EDF5ED] px-3 py-1 text-[10px] text-[#5D8260]">
                               {t.current}
                             </span>
-
                           </div>
-
                           <h3 className="mt-3 max-w-[650px] font-serif text-[22px] leading-7 text-[#211735]">
                             {translated.title}
                           </h3>
-
                           <p className="mt-3 max-w-[680px] text-sm leading-6 text-[#806D7B]">
                             {translated.description}
                           </p>
-
                         </div>
                       </div>
-
                       <button
                         type="button"
                         className="hidden shrink-0 text-[#74478A] sm:block"
@@ -1052,11 +878,8 @@ export default function SearchPage() {
                           className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"
                         />
                       </button>
-
                     </div>
-
                     <div className="mt-6 border-t border-[#EEE7E2] pt-4">
-
                       <button
                         type="button"
                         className="flex items-center gap-2 text-xs font-medium text-[#74478A]"
@@ -1064,43 +887,29 @@ export default function SearchPage() {
                         {t.viewStandard}
                         <ArrowUpRight size={14} />
                       </button>
-
                     </div>
-
                   </article>
                 );
               })}
 
               {/* EMPTY STATE */}
-
               {filteredStandards.length === 0 && (
-
                 <div className="rounded-[22px] border border-dashed border-[#D8C8D6] bg-[#FDF9FC] px-8 py-16 text-center">
-
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EDE0EC] text-[#74478A]">
                     <Search size={22} />
                   </div>
-
                   <h3 className="mt-5 font-serif text-2xl">
                     {t.noStandards}
                   </h3>
-
                   <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#806D7B]">
                     {t.tryDifferent}
                   </p>
-
                 </div>
-
               )}
-
             </div>
-
           </div>
-
         </div>
-
       </section>
-
     </main>
   );
 }
