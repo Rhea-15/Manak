@@ -27,7 +27,7 @@ class BM25Indexer:
     def __init__(self, k1: float = settings.bm25_k1, b: float = settings.bm25_b):
         """
         Initialize BM25 indexer using BM25Plus to ensure positive IDF scores.
-        
+
         Args:
             k1: Controls term frequency saturation; defaults to the configured BM25_K1.
             b: Controls length normalization; defaults to the configured BM25_B.
@@ -39,7 +39,7 @@ class BM25Indexer:
         if not BM25Plus:
             self.logger.error("rank_bm25 not installed. Install with: pip install rank-bm25")
             raise RuntimeError("rank_bm25 required")
-        
+
         self.documents: list[list[str]] = []
         self.doc_metadata: list[dict] = []
         self.bm25_model: BM25Plus = None
@@ -56,27 +56,27 @@ class BM25Indexer:
     def add_documents(self, documents: list[BM25Document]) -> None:
         """
         Add documents to BM25 index.
-        
+
         Args:
             documents: List of {"text": str, "id": int, "metadata": {...}}
         """
         self.documents = []
         self.doc_metadata = []
-        
+
         for doc in documents:
             text = doc.get("text", "")
             tokenized = self._tokenize(text)
-            
+
             self.documents.append(tokenized)
             self.doc_metadata.append({
                 "id": doc.get("id"),
                 "text_preview": text[:200],
                 "metadata": doc.get("metadata", {}),
             })
-        
+
         self.bm25_model = (
-            BM25Plus(self.documents, k1=self.k1, b=self.b) 
-            if self.documents 
+            BM25Plus(self.documents, k1=self.k1, b=self.b)
+            if self.documents
             else None
         )
         self.logger.info(f"Indexed {len(self.documents)} documents with BM25")
@@ -84,11 +84,11 @@ class BM25Indexer:
     def search(self, query: str, top_k: int = 10) -> list[dict]:
         """
         Search documents using BM25.
-        
+
         Args:
             query: Query text
             top_k: Number of top results to return
-        
+
         Returns:
             List of {"doc_id": int, "score": float, "text_preview": str, "metadata": {}}.
             Empty if top_k is nonpositive, the index is empty, or no document
@@ -100,34 +100,34 @@ class BM25Indexer:
         if not self.bm25_model or not self.documents:
             self.logger.error("BM25 model not initialized or empty")
             return []
-        
+
         tokenized_query = self._tokenize(query)
         scores = self.bm25_model.get_scores(tokenized_query)
-        
+
         # Primary sort: BM25 score (descending)
         # Secondary sort: original insertion order (ascending = earlier docs first)
         sorted_indices = sorted(
             range(len(scores)),
             key=lambda i: (-scores[i], i),
         )
-        
+
         results = []
         for idx in sorted_indices:
             score = float(scores[idx])
             # Only include results with positive relevance scores
             if score <= 0 or not set(tokenized_query).intersection(self.documents[idx]):
                 continue
-                
+
             results.append({
                 "doc_id": self.doc_metadata[idx]["id"],
                 "score": score,
                 "text_preview": self.doc_metadata[idx]["text_preview"],
                 "metadata": self.doc_metadata[idx]["metadata"],
             })
-            
+
             if len(results) >= top_k:
                 break
-        
+
         return results
 
     def save_index(self, path: str) -> bool:
@@ -153,12 +153,12 @@ class BM25Indexer:
                 data = json.load(f)
             self.documents = data.get("documents", [])
             self.doc_metadata = data["doc_metadata"]
-            self.k1 = data.get("k1", 1.5)
-            self.b = data.get("b", 0.75)
-            
+            self.k1 = data.get("k1", settings.bm25_k1)
+            self.b = data.get("b", settings.bm25_b)
+
             if self.documents:
                 self.bm25_model = BM25Plus(self.documents, k1=self.k1, b=self.b)
-            
+
             self.logger.info(f"Loaded BM25 index from {path}")
             return True
         except (OSError, KeyError, TypeError, ValueError) as e:

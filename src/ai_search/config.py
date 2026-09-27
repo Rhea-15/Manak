@@ -72,6 +72,8 @@ class AISearchSettings:
     indictrans2_model: str = field(
         default_factory=lambda: _env_str("INDICTRANS2_MODEL", "ai4bharat/indic-trans-v2-all-gpu")
     )
+    translation_max_length: int = field(default_factory=lambda: _env_int("TRANSLATION_MAX_LENGTH", 512))
+    translation_num_beams: int = field(default_factory=lambda: _env_int("TRANSLATION_NUM_BEAMS", 4))
 
     # Ingestion
     max_upload_file_size_mb: int = field(default_factory=lambda: _env_int("MAX_UPLOAD_FILE_SIZE_MB", 100))

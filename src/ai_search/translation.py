@@ -27,7 +27,7 @@ class IndicTrans2Translator:
     def __init__(self, model_name: str = settings.indictrans2_model):
         """
         Load the translation model, with mock translation as a fallback.
-        
+
         Args:
             model_name: Hugging Face model name; defaults to the configured
                 INDICTRANS2_MODEL.
@@ -39,10 +39,10 @@ class IndicTrans2Translator:
         self.model_name = model_name
         self.model = None
         self.tokenizer = None
-        
+
         try:
             from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-            
+
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
             self.logger.info(f"Loaded IndicTrans2 model: {model_name}")
@@ -59,22 +59,22 @@ class IndicTrans2Translator:
     ) -> str:
         """
         Translate text between languages.
-        
+
         Args:
             text: Text to translate
             source_lang: Source language code (e.g., 'hin_Deva' for Hindi)
             target_lang: Target language code (default: 'eng_Latn' for English)
-        
+
         Returns:
             Translated text
         """
         if not text or not text.strip():
             return ""
-        
+
         if self.model is None:
             # Mock mode for testing
             return self._mock_translate(text)
-        
+
         try:
             import torch
             from IndicTransToolkit.processor import IndicProcessor
@@ -85,7 +85,7 @@ class IndicTrans2Translator:
                 src_lang=source_lang,
                 tgt_lang=target_lang,
             )
-            
+
             # Tokenize
             inputs = self.tokenizer(
                 input_batch,
@@ -94,22 +94,24 @@ class IndicTrans2Translator:
                 return_tensors="pt",
                 return_attention_mask=True,
             )
-            
-            # Generate translation
+
+            # Generate translation — max_length/num_beams are config-driven
+            # (settings.translation_max_length / translation_num_beams) so
+            # tuning doesn't require a code change mid-hackathon.
             with torch.no_grad():
                 generated_ids = self.model.generate(
                     **inputs,
-                    max_length=512,
-                    num_beams=4,
+                    max_length=settings.translation_max_length,
+                    num_beams=settings.translation_num_beams,
                 )
-            
+
             # Decode
             translated = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
-            
+
             # Postprocess to handle entity placeholders correctly
             postprocessed = processor.postprocess_batch(translated, lang=target_lang)
             return postprocessed[0]
-        
+
         except (ImportError, RuntimeError, ValueError, KeyError) as e:
             self.logger.error(f"Translation error: {e}")
             return text  # Return original on error
@@ -125,16 +127,16 @@ class IndicTrans2Translator:
     def detect_language(self, text: str) -> str | None:
         """
         Detect language of input text.
-        
+
         Args:
             text: Text to detect language for
-        
+
         Returns:
             Language code (e.g., 'hin_Deva') or None
         """
         if not text:
             return None
-        
+
         try:
             from langdetect import LangDetectException, detect
         except ImportError as e:
@@ -143,7 +145,7 @@ class IndicTrans2Translator:
 
         try:
             lang_code = detect(text)
-            
+
             # Map to IndicTrans2 format
             lang_mapping = {
                 "hi": "hin_Deva",
@@ -155,9 +157,9 @@ class IndicTrans2Translator:
                 "gu": "guj_Gujr",
                 "bn": "ben_Beng",
             }
-            
+
             return lang_mapping.get(lang_code)
-        
+
         except LangDetectException as e:
             self.logger.debug(f"Language detection failed: {e}")
             return None
@@ -167,7 +169,7 @@ class IndicTrans2Translator:
         detected = self.detect_language(text)
         if detected:
             mapped_indic_codes = {
-                "hin", "tam", "tel", "kan", 
+                "hin", "tam", "tel", "kan",
                 "mal", "mar", "guj", "ben"
             }
             return detected.split("_")[0] in mapped_indic_codes
@@ -185,10 +187,10 @@ class TranslationPipeline:
     def normalize_query(self, query: str) -> dict[str, str | bool]:
         """
         Normalize query by detecting language and translating if needed.
-        
+
         Args:
             query: User query (may be in Indian language)
-        
+
         Returns:
             {
                 "original": original query,
@@ -198,7 +200,7 @@ class TranslationPipeline:
             }
         """
         lang = self.translator.detect_language(query)
-        
+
         if lang and lang != "eng_Latn":
             # Translate to English
             translated = self.translator.translate(
