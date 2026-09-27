@@ -1,13 +1,41 @@
 "use client";
 
-import { mockAuditLog } from "../app/mocks/auditLog";
+import { useEffect, useState } from "react";
+
+type AuditEntry = {
+  id: number;
+  user_id: string;
+  action: string;
+  details: string;
+  created_at: string;
+};
 
 export default function AuditLogView() {
+  const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/audit/logs", {
+      headers: { "X-User-Role": "ADMIN" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setEntries(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load audit logs:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <p className="text-slate-500">Loading audit log...</p>;
+
   return (
     <div>
-      <h2 className="mb-4 font-serif text-2xl font-bold text-slate-800">
-  Audit Log
-</h2>
+      <h2 className="mb-4 text-xl font-bold text-slate-800">
+        Audit Log
+      </h2>
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead>
@@ -27,16 +55,16 @@ export default function AuditLogView() {
             </tr>
           </thead>
           <tbody>
-            {mockAuditLog.map((entry) => (
+            {entries.map((entry) => (
               <tr key={entry.id} className="border-b border-slate-200 last:border-b-0">
                 <td className="px-6 py-4 text-slate-600">
-                  {new Date(entry.timestamp).toLocaleString('en-US', { timeZone: 'UTC' })}
+                  {new Date(entry.created_at).toLocaleString('en-US', { timeZone: 'UTC' })}
                 </td>
-                <td className="px-6 py-4 text-slate-800">{entry.actor}</td>
+                <td className="px-6 py-4 text-slate-800">{entry.user_id}</td>
                 <td className="px-6 py-4">
                   <span
                     className={
-                      entry.action === "APPROVED"
+                      entry.action.includes("APPROVE")
                         ? "inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
                         : "inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700"
                     }
@@ -44,7 +72,7 @@ export default function AuditLogView() {
                     {entry.action}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-slate-600">{entry.target}</td>
+                <td className="px-6 py-4 text-slate-600">{entry.details}</td>
               </tr>
             ))}
           </tbody>
