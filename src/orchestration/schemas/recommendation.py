@@ -15,3 +15,4 @@ class RecommendationResponse(BaseModel):
     mandatory_marks: list[str] = []
     allied_standards: list[str] = []
     source: str = "rules_engine"  # never allow "llm_guess" to reach the frontend
+    needs_review: bool = False

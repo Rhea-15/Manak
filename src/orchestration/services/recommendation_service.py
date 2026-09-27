@@ -4,6 +4,10 @@ from src.backend.compliance_rules import check_compliance_rules
 from src.backend.database import SessionLocal
 from src.backend.verification_engine import verify_compliance_data
 from src.db_graph.models import Standard
+from src.orchestration.services.confidence import (
+    evaluate_recommendation_confidence,
+    flag_low_confidence_recommendation,
+)
 from src.orchestration.services.search_service import run_with_timeout
 
 IS_PATTERN = re.compile(r"\bIS\s+\d{1,6}:\d{4}\b", re.IGNORECASE)
@@ -102,10 +106,17 @@ def _recommend_standard_impl(item_id: str, original_spec: str) -> dict:
 
 def recommend_standard(item_id: str, original_spec: str) -> dict:
     """Return a recommendation, falling back when processing takes too long."""
-    return run_with_timeout(
+    result = run_with_timeout(
         _recommend_standard_impl,
         item_id,
         original_spec,
         timeout_seconds=2.0,
         fallback=_fallback_recommendation(item_id, original_spec),
     )
+
+    # Day 6: mark first (pure), then persist -- persistence deliberately
+    # happens after the timeout boundary above has already resolved.
+    result = evaluate_recommendation_confidence(result)
+    flag_low_confidence_recommendation(result)
+
+    return result

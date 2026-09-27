@@ -10,6 +10,10 @@ from src.backend.database import SessionLocal
 from src.db_graph import versioning
 from src.db_graph.graph_service import get_standard_graph
 from src.db_graph.models import Standard
+from src.orchestration.services.confidence import (
+    apply_confidence_gate,
+    flag_low_confidence_search_results,
+)
 
 _embedding_model = None
 _qdrant = None
@@ -146,6 +150,11 @@ def _search_standards_impl(query: str, top_k: int = 5) -> dict:
     finally:
         db.close()
 
+    # Day 6: pure marking only -- cheap, deterministic, safe inside the
+    # timed section. ReviewQueue persistence happens later, outside
+    # both the timeout boundary and the cache write (see search_standards).
+    results = apply_confidence_gate(results)
+
     return {
         "query": query,
         "results": results,
@@ -182,5 +191,9 @@ def search_standards(query: str, top_k: int = 5) -> dict:
 
     if result.get("status") != "fallback":
         cache_set(cache_key, result, ttl=60)
+        # Day 6: best-effort ReviewQueue write, deliberately outside the
+        # timeout boundary above and only on a freshly-computed result
+        # (never on a cache hit, never on a fallback).
+        flag_low_confidence_search_results(result.get("results", []), query=query)
 
     return result

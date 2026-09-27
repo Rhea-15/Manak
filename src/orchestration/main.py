@@ -9,7 +9,7 @@ from src.backend import (
     review,
     verification,
 )
-from src.orchestration.routers import recommendation, score, search
+from src.orchestration.routers import recommendation, score, search, ingest, graph
 
 app = FastAPI(
     title="MANAK Orchestration Layer",
@@ -34,6 +34,8 @@ app.include_router(quality_score.router)
 app.include_router(review.router)
 app.include_router(verification.router)
 app.include_router(documents.router)
+app.include_router(ingest.router)
+app.include_router(graph.router)
 
 
 @app.get("/health")

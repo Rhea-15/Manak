@@ -18,6 +18,7 @@ class SearchResult(BaseModel):
     active_version: str | None = None
     compliance: dict = Field(default_factory=dict)
     graph: dict = Field(default_factory=dict)
+    needs_review: bool = False
 
 
 class SearchResponse(BaseModel):
