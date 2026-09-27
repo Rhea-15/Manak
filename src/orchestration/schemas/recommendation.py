@@ -8,6 +8,7 @@ class RecommendationRequest(BaseModel):
 
 class RecommendationResponse(BaseModel):
     item_id: str
+    standard_id: int | None = None
     original_spec: str
     ai_suggested_spec: str
     compliant: bool

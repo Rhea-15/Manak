@@ -10,75 +10,113 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Header from "@/components/header";
+import { apiRequest } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const recommendations = [
-  {
-    code: "IS 15683:2018",
-    title: "Portable Fire Extinguishers",
-    category: "Fire Safety",
-    relevance: 96,
-    reason:
-      "The tender contains requirements related to portable fire extinguishers, including construction and performance.",
-    status: "Highly Relevant",
-  },
-  {
-    code: "IS 2190:2024",
-    title:
-      "Selection, Installation and Maintenance of First-Aid Fire Extinguishing Appliances",
-    category: "Fire Safety",
-    relevance: 91,
-    reason:
-      "Applicable to the selection, installation and maintenance requirements specified in the tender.",
-    status: "Highly Relevant",
-  },
-  {
-    code: "IS 732:2019",
-    title: "Code of Practice for Electrical Wiring Installations",
-    category: "Electrical",
-    relevance: 78,
-    reason:
-      "Relevant electrical installation requirements were identified in the tender specifications.",
-    status: "Relevant",
-  },
-  {
-    code: "IS 2062:2011",
-    title: "Hot Rolled Medium and High Tensile Structural Steel",
-    category: "Construction",
-    relevance: 64,
-    reason:
-      "The tender references structural material requirements that may relate to this standard.",
-    status: "Potentially Relevant",
-  },
-];
+type Recommendation = {
+  item_id: string;
+  standard_id: number | null;
+  original_spec: string;
+  ai_suggested_spec: string;
+  compliant: boolean;
+  mandatory_marks: string[];
+  allied_standards: string[];
+  source: string;
+};
+
+type UploadedDocument = {
+  document_id?: string;
+  filename?: string;
+  extracted_data?: {
+    pages?: {
+      raw_text?: string;
+      entities?: { text: string }[];
+    }[];
+  } | null;
+};
 
 export default function RecommendationsPage() {
   const router = useRouter();
 
   const [fileName, setFileName] = useState("Tender document");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const storedFile = localStorage.getItem("manak_uploaded_file");
 
-    if (storedFile) {
-      try {
-        const file = JSON.parse(storedFile);
-
-        if (file.name) {
-          setFileName(file.name);
-        }
-      } catch {
-        console.log("Unable to read uploaded file information");
-      }
+    if (!storedFile) {
+      setError("Upload a tender before requesting recommendations.");
+      setLoading(false);
+      return;
     }
+
+    const loadRecommendations = async () => {
+      try {
+        const document = JSON.parse(storedFile) as UploadedDocument;
+        if (document.filename) setFileName(document.filename);
+
+        const specifications = (document.extracted_data?.pages ?? [])
+          .map((page) =>
+            page.raw_text?.trim() ||
+            page.entities?.map((entity) => entity.text).join("; ") ||
+            ""
+          )
+          .filter(Boolean);
+
+        if (!specifications.length) {
+          throw new Error(
+            "No extracted text is available. Upload a supported PDF or TXT document."
+          );
+        }
+
+        const results = await Promise.all(
+          specifications.map((original_spec, index) =>
+            apiRequest<Recommendation>("/api/v1/recommendation", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                item_id: `${document.document_id ?? "tender"}-${index + 1}`,
+                original_spec,
+              }),
+            })
+          )
+        );
+
+        if (!cancelled) setRecommendations(results);
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Could not load recommendations."
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+
+    };
+
+    void loadRecommendations();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const categories = [
     "All",
     ...Array.from(
-      new Set(recommendations.map((item) => item.category))
+      new Set(
+        recommendations.map((item) =>
+          item.compliant ? "Compliant" : "Needs verification"
+        )
+      )
     ),
   ];
 
@@ -86,8 +124,25 @@ export default function RecommendationsPage() {
     selectedCategory === "All"
       ? recommendations
       : recommendations.filter(
-          (item) => item.category === selectedCategory
+          (item) =>
+            (item.compliant ? "Compliant" : "Needs verification") ===
+            selectedCategory
         );
+
+  const openCompliance = (recommendation: Recommendation) => {
+    if (recommendation.standard_id === null) return;
+    localStorage.setItem(
+      "manak_selected_standard",
+      JSON.stringify({
+        standard_id: recommendation.standard_id,
+        standard_number: recommendation.ai_suggested_spec.match(
+          /\bIS\s+\d{1,6}:\d{4}\b/i
+        )?.[0],
+        title: recommendation.ai_suggested_spec,
+      })
+    );
+    router.push("/compliance");
+  };
 
   return (
     <main className="min-h-screen bg-[#FBF8F4] text-[#211735]">
@@ -175,11 +230,17 @@ export default function RecommendationsPage() {
 
             <Sparkles size={16} />
 
-            AI analysis complete
+            {loading ? "Analyzing tender..." : "Analysis response"}
 
           </div>
 
         </div>
+
+        {error && (
+          <p role="alert" className="mt-4 text-sm text-[#A55E65]">
+            {error}
+          </p>
+        )}
 
 
         {/* SUMMARY */}
@@ -189,28 +250,26 @@ export default function RecommendationsPage() {
           <InfoCard
             icon={<BookOpen size={19} />}
             number={recommendations.length}
-            title="Standards found"
-            description="Potentially applicable standards"
+            title="Requirements analyzed"
+            description="Extracted tender pages sent to the API"
           />
 
 
           <InfoCard
             icon={<CheckCircle2 size={19} />}
             number={
-              recommendations.filter(
-                (item) => item.relevance >= 90
-              ).length
+              recommendations.filter((item) => item.compliant).length
             }
-            title="Highly relevant"
-            description="Strong specification matches"
+            title="Compliant"
+            description="API responses marked compliant"
           />
 
 
           <InfoCard
             icon={<ShieldCheck size={19} />}
-            number={4}
-            title="Categories"
-            description="Areas covered by recommendations"
+            number={recommendations.filter((item) => !item.compliant).length}
+            title="Needs verification"
+            description="Requirements requiring review"
           />
 
         </div>
@@ -251,11 +310,18 @@ export default function RecommendationsPage() {
           {filteredRecommendations.map((recommendation) => (
 
             <RecommendationCard
-              key={recommendation.code}
+              key={recommendation.item_id}
               recommendation={recommendation}
+              onViewStandard={() => openCompliance(recommendation)}
             />
 
           ))}
+
+          {!loading && !error && recommendations.length === 0 && (
+            <p className="rounded-xl border border-dashed border-[#D8C8D6] p-6 text-sm text-[#806D7B]">
+              No recommendation results were returned.
+            </p>
+          )}
 
         </div>
 
@@ -371,15 +437,10 @@ function InfoCard({
 
 function RecommendationCard({
   recommendation,
+  onViewStandard,
 }: {
-  recommendation: {
-    code: string;
-    title: string;
-    category: string;
-    relevance: number;
-    reason: string;
-    status: string;
-  };
+  recommendation: Recommendation;
+  onViewStandard: () => void;
 }) {
 
   return (
@@ -401,30 +462,21 @@ function RecommendationCard({
 
             <div className="flex flex-wrap items-center gap-3">
 
-              <span className="font-medium text-[#74478A]">
-                {recommendation.code}
-              </span>
-
-
-              <span className="rounded-full bg-[#F2EEE8] px-3 py-1 text-[10px] text-[#806D7B]">
-                {recommendation.category}
-              </span>
-
-
-              <span className="rounded-full bg-[#EDF5ED] px-3 py-1 text-[10px] text-[#5D8260]">
-                {recommendation.status}
+              <span className={`rounded-full px-3 py-1 text-[10px] ${recommendation.compliant ? "bg-[#EDF5ED] text-[#5D8260]" : "bg-[#FFF1D9] text-[#9A6B35]"}`}>
+                {recommendation.compliant ? "Compliant" : "Verification required"}
               </span>
 
             </div>
 
 
             <h2 className="mt-3 font-serif text-[24px] leading-8 text-[#211735]">
-              {recommendation.title}
+              {recommendation.ai_suggested_spec}
             </h2>
 
 
             <p className="mt-3 max-w-[720px] text-sm leading-6 text-[#806D7B]">
-              {recommendation.reason}
+              <span className="font-medium text-[#493D50]">Tender text: </span>
+              {recommendation.original_spec}
             </p>
 
           </div>
@@ -432,35 +484,8 @@ function RecommendationCard({
         </div>
 
 
-        {/* RELEVANCE */}
-
-        <div className="shrink-0 md:w-32">
-
-          <div className="flex items-center justify-between text-xs">
-
-            <span className="text-[#806D7B]">
-              Relevance
-            </span>
-
-
-            <span className="font-medium text-[#74478A]">
-              {recommendation.relevance}%
-            </span>
-
-          </div>
-
-
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#EEE6EC]">
-
-            <div
-              className="h-full rounded-full bg-[#74478A]"
-              style={{
-                width: `${recommendation.relevance}%`,
-              }}
-            />
-
-          </div>
-
+        <div className="shrink-0 text-xs text-[#806D7B]">
+          Source: {recommendation.source}
         </div>
 
       </div>
@@ -468,21 +493,23 @@ function RecommendationCard({
 
       <div className="mt-6 flex items-center justify-between border-t border-[#EEE7E2] pt-4">
 
-        <div className="flex items-center gap-2 text-xs text-[#806D7B]">
-
-          <CheckCircle2
-            size={14}
-            className="text-[#5D8260]"
-          />
-
-          Match generated from tender specifications
-
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#806D7B]">
+          {recommendation.mandatory_marks.length ? (
+            <>
+              <CheckCircle2 size={14} className="text-[#5D8260]" />
+              Mandatory marks: {recommendation.mandatory_marks.join(", ")}
+            </>
+          ) : (
+            <span>No mandatory marks returned</span>
+          )}
         </div>
 
 
         <button
           type="button"
-          className="flex items-center gap-2 text-xs font-medium text-[#74478A]"
+          onClick={onViewStandard}
+          disabled={recommendation.standard_id === null}
+          className="flex items-center gap-2 text-xs font-medium text-[#74478A] disabled:cursor-not-allowed disabled:opacity-50"
         >
 
           View standard

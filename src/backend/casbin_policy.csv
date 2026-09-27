@@ -1,4 +1,5 @@
 p, ADMIN, /documents/upload, POST, allow
+p, ADMIN, /documents, GET, allow
 p, ADMIN, /review/queue, GET, allow
 p, ADMIN, /review/queue/*, PUT, allow
 p, ADMIN, /audit/logs, GET, allow
@@ -9,6 +10,7 @@ p, ADMIN, /graph/standard/*, GET, allow
 p, ADMIN, /unified/*, GET, allow
 
 p, MANAGER, /documents/upload, POST, allow
+p, MANAGER, /documents, GET, allow
 p, MANAGER, /review/queue, GET, allow
 p, MANAGER, /review/queue/*, PUT, allow
 p, MANAGER, /verification/*, GET, allow
@@ -18,6 +20,7 @@ p, MANAGER, /graph/standard/*, GET, allow
 p, MANAGER, /unified/*, GET, allow
 
 p, EXECUTIVE, /documents/upload, POST, allow
+p, EXECUTIVE, /documents, GET, allow
 p, EXECUTIVE, /review/queue, GET, allow
 p, EXECUTIVE, /verification/*, GET, allow
 p, EXECUTIVE, /quality-score/*, GET, allow

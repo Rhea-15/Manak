@@ -9,11 +9,111 @@ import {
   AlertCircle,
   ShieldCheck,
 } from "lucide-react";
+import { apiRequest } from "@/lib/api";
+import { useEffect, useState } from "react";
+
+type SelectedStandard = {
+  standard_id: number;
+  standard_number?: string;
+  title?: string;
+};
+
+type ComplianceData = {
+  status: string;
+  alerts: { type: string; requirement_name?: string; reason: string; status: string }[];
+};
+
+type QualityData = { score?: number; status?: string };
+
+type VerificationData = {
+  status: string;
+  results: { type: string; status: string; reason?: string; source?: string }[];
+};
 
 import NormativeTreeGraph from "../../components/NormativeTreeGraph";
 import DiffAndGaugeView from "../../components/DiffAndGaugeView";
 
 export default function CompliancePage() {
+  const [standard, setStandard] = useState<SelectedStandard | null>(null);
+  const [documentName, setDocumentName] = useState("Tender document");
+  const [compliance, setCompliance] = useState<ComplianceData | null>(null);
+  const [quality, setQuality] = useState<QualityData | null>(null);
+  const [verification, setVerification] = useState<VerificationData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedDocument = localStorage.getItem("manak_uploaded_file");
+    if (storedDocument) {
+      try {
+        const parsed = JSON.parse(storedDocument);
+        if (parsed.filename) setDocumentName(parsed.filename);
+      } catch {
+        setDocumentName("Tender document");
+      }
+    }
+
+    const storedStandard = localStorage.getItem("manak_selected_standard");
+    if (!storedStandard) {
+      setError("Select a matched standard from Recommendations to check compliance.");
+      setLoading(false);
+      return;
+    }
+
+    let selected: SelectedStandard;
+    try {
+      selected = JSON.parse(storedStandard) as SelectedStandard;
+      if (!Number.isInteger(selected.standard_id)) {
+        throw new Error("Invalid standard selection.");
+      }
+      setStandard(selected);
+    } catch {
+      setError("The selected standard is invalid. Choose it again from Search.");
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const loadCompliance = async () => {
+      try {
+        const standardId = selected.standard_id;
+        const [complianceResult, qualityResult, verificationResult] =
+          await Promise.all([
+            apiRequest<ComplianceData>(`/compliance/${standardId}`),
+            apiRequest<QualityData>(`/quality-score/${standardId}`),
+            apiRequest<VerificationData>(`/verification/${standardId}`),
+          ]);
+
+        if (!cancelled) {
+          setCompliance(complianceResult);
+          setQuality(qualityResult);
+          setVerification(verificationResult);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Could not load compliance results."
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadCompliance();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const verificationResults = verification?.results ?? [];
+  const verifiedCount = verificationResults.filter(
+    (result) => result.status === "verified"
+  ).length;
+  const needsReviewCount = verificationResults.length - verifiedCount;
+
   return (
     <main className="min-h-screen bg-[#FBF8F4] text-[#211735]">
 
@@ -92,11 +192,11 @@ export default function CompliancePage() {
               </p>
 
               <h2 className="mt-1 font-serif text-2xl">
-                Tender_Requirements.pdf
+                {documentName}
               </h2>
 
               <p className="mt-1 text-sm text-[#806D7B]">
-                Analysed by MANAK
+                {standard?.standard_number ?? "Choose a standard to evaluate"}
               </p>
             </div>
 
@@ -113,6 +213,16 @@ export default function CompliancePage() {
 
         </div>
 
+        {error && (
+          <p role="alert" className="mt-5 rounded-xl bg-[#FFF1D9] p-4 text-sm text-[#8D5B2B]">
+            {error}
+            {error.toLowerCase().includes("role") || error.toLowerCase().includes("access")
+              ? " This endpoint requires a MANAGER or ADMIN role."
+              : ""}
+          </p>
+        )}
+
+        {/* COMPLIANCE SUMMARY */}
         {/* COMPLIANCE SUMMARY & GAUGE */}
         <div className="mt-10 grid gap-6 md:grid-cols-[1fr_280px]">
 
@@ -133,18 +243,23 @@ export default function CompliancePage() {
             <div className="mt-6 flex flex-wrap items-end gap-3">
 
               <span className="font-serif text-6xl text-[#74478A]">
-                82%
+                {loading ? "…" : quality?.score != null ? `${Math.round(quality.score)}%` : "—"}
               </span>
 
               <span className="mb-2 rounded-full bg-[#FFF1D9] px-3 py-1.5 text-xs font-medium text-[#9A6B35]">
-                Partially Compliant
+                {loading
+                  ? "Checking"
+                  : compliance?.status === "checked"
+                    ? compliance.alerts.length > 0
+                      ? "Needs review"
+                      : "No alerts"
+                    : compliance?.status ?? "Unavailable"}
               </span>
 
             </div>
 
             <p className="mt-4 max-w-[600px] text-sm leading-6 text-[#806D7B]">
-              Most requirements are aligned with the applicable standard.
-              One requirement needs further review.
+              Quality score and compliance alerts returned by the backend for this standard.
             </p>
 
           </div>
@@ -165,7 +280,7 @@ export default function CompliancePage() {
 
                 <span className="flex items-center gap-2 font-medium text-[#5D8260]">
                   <CheckCircle2 size={17} />
-                  4
+                  {verifiedCount}
                 </span>
               </div>
 
@@ -176,7 +291,7 @@ export default function CompliancePage() {
 
                 <span className="flex items-center gap-2 font-medium text-[#B56D70]">
                   <AlertCircle size={17} />
-                  1
+                  {needsReviewCount}
                 </span>
               </div>
 
@@ -220,173 +335,54 @@ export default function CompliancePage() {
 
         {/* COMPARISON */}
         <div className="mt-14">
-
           <div className="mb-6">
             <p className="text-xs uppercase tracking-[0.25em] text-[#A35A91]">
-              Requirement comparison
+              Compliance details
             </p>
-
             <h2 className="mt-3 font-serif text-3xl">
-              Tender vs applicable standard
+              {standard?.title ?? standard?.standard_number ?? "Select a standard"}
             </h2>
           </div>
 
-          {/* COMPARISON CARD */}
-          <div className="overflow-hidden rounded-[24px] border border-[#E4DAD5] bg-white">
-
-            {/* COLUMN HEADERS */}
-            <div className="grid border-b border-[#E4DAD5] md:grid-cols-2">
-
-              <div className="border-b border-[#E4DAD5] bg-[#FBF7F1] px-7 py-5 md:border-b-0 md:border-r">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#806D7B]">
-                  Tender requirement
-                </p>
-              </div>
-
-              <div className="bg-[#FBF7F1] px-7 py-5">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#806D7B]">
-                  Applicable Indian Standard
-                </p>
-              </div>
-
-            </div>
-
-            {/* COMPARISON CONTENT */}
-            <div className="grid md:grid-cols-2">
-
-              {/* LEFT */}
-              <div className="border-b border-[#E4DAD5] p-7 md:border-b-0 md:border-r">
-
-                <div className="mb-4 flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#E9A4A4]" />
-
-                  <span className="text-xs font-medium text-[#A56B70]">
-                    Requirement
-                  </span>
-                </div>
-
-                <p className="text-[17px] leading-8 text-[#211735]">
-                  The supplied material must comply with applicable quality
-                  specifications.
-                </p>
-
-              </div>
-
-              {/* RIGHT */}
-              <div className="p-7">
-
-                <div className="mb-4 flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#A9D9B2]" />
-
-                  <span className="text-xs font-medium text-[#5D8260]">
-                    Standard
-                  </span>
-                </div>
-
-                <p className="text-[17px] leading-8 text-[#211735]">
-                  Materials shall comply with the applicable quality
-                  specifications and prescribed permissible limits.
-                </p>
-
-              </div>
-
-            </div>
-
-            {/* STATUS */}
-            <div className="border-t border-[#E4DAD5] bg-[#FFF9F3] px-7 py-5">
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                <div className="flex items-center gap-3">
-
-                  <AlertCircle
-                    size={19}
-                    className="text-[#B56D70]"
-                  />
-
+          <div className="space-y-3">
+            {(compliance?.alerts ?? []).map((alert) => (
+              <article key={`${alert.type}-${alert.requirement_name}-${alert.status}`} className="rounded-xl border border-[#E4DAD5] bg-white p-5">
+                <div className="flex items-start gap-3">
+                  <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#B56D70]" />
                   <div>
-                    <p className="text-sm font-medium text-[#493D50]">
-                      Difference detected
+                    <p className="font-medium text-[#493D50]">
+                      {alert.requirement_name ?? alert.type} · {alert.status.replaceAll("_", " ")}
                     </p>
-
-                    <p className="mt-1 text-xs text-[#806D7B]">
-                      The standard specifies permissible limits that are not
-                      explicitly mentioned in the tender.
+                    <p className="mt-1 text-sm text-[#806D7B]">{alert.reason}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+            {verificationResults.map((result, index) => (
+              <article key={`${result.type}-${index}`} className="rounded-xl border border-[#E4DAD5] bg-white p-5">
+                <div className="flex items-start gap-3">
+                  {result.status === "verified" ? (
+                    <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[#5D8260]" />
+                  ) : (
+                    <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#B56D70]" />
+                  )}
+                  <div>
+                    <p className="font-medium text-[#493D50]">
+                      {result.type} verification · {result.status.replaceAll("_", " ")}
+                    </p>
+                    <p className="mt-1 text-sm text-[#806D7B]">
+                      {result.reason ?? result.source ?? "Verified source"}
                     </p>
                   </div>
-
                 </div>
-
-                <span className="w-fit rounded-full bg-[#F7E2E2] px-4 py-2 text-xs font-medium text-[#A55E65]">
-                  Needs Review
-                </span>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* SECOND REQUIREMENT */}
-        <div className="mt-6 overflow-hidden rounded-[24px] border border-[#E4DAD5] bg-white">
-
-          <div className="grid md:grid-cols-2">
-
-            <div className="border-b border-[#E4DAD5] p-7 md:border-b-0 md:border-r">
-
-              <div className="mb-4 flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#A9D9B2]" />
-
-                <span className="text-xs font-medium text-[#5D8260]">
-                  Requirement
-                </span>
-              </div>
-
-              <p className="text-[17px] leading-8 text-[#211735]">
-                Materials must meet the required strength and durability
-                specifications.
+              </article>
+            ))}
+            {!loading && !error && (compliance?.alerts.length ?? 0) === 0 && verificationResults.length === 0 && (
+              <p className="rounded-xl border border-dashed border-[#D8C8D6] p-6 text-sm text-[#806D7B]">
+                The API returned no requirement details for this standard.
               </p>
-
-            </div>
-
-            <div className="p-7">
-
-              <div className="mb-4 flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#A9D9B2]" />
-
-                <span className="text-xs font-medium text-[#5D8260]">
-                  Standard
-                </span>
-              </div>
-
-              <p className="text-[17px] leading-8 text-[#211735]">
-                Materials shall satisfy the specified strength and durability
-                requirements.
-              </p>
-
-            </div>
-
+            )}
           </div>
-
-          <div className="border-t border-[#E4DAD5] bg-[#F5FAF5] px-7 py-5">
-
-            <div className="flex items-center gap-3">
-
-              <CheckCircle2
-                size={19}
-                className="text-[#5D8260]"
-              />
-
-              <p className="text-sm font-medium text-[#5D8260]">
-                Requirement appears compliant
-              </p>
-
-            </div>
-
-          </div>
-
         </div>
 
         {/* FOOTER ACTIONS */}

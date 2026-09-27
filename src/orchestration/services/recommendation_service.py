@@ -13,6 +13,7 @@ def _fallback_recommendation(item_id: str, original_spec: str) -> dict:
     """Return an unverified recommendation when no standard can be confirmed."""
     return {
         "item_id": item_id,
+        "standard_id": None,
         "original_spec": original_spec,
         "ai_suggested_spec": "Verification required",
         "compliant": False,
@@ -86,6 +87,7 @@ def _recommend_standard_impl(item_id: str, original_spec: str) -> dict:
 
         return {
             "item_id": item_id,
+            "standard_id": standard.id,
             "original_spec": original_spec,
             "ai_suggested_spec": suggested_spec,
             "compliant": compliant,

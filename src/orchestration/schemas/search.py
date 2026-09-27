@@ -10,6 +10,7 @@ class SearchRequest(BaseModel):
 
 
 class SearchResult(BaseModel):
+    standard_id: int | None = None
     standard_number: str
     title: str
     score: float = Field(..., ge=0, le=1)

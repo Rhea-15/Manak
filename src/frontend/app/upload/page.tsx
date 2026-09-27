@@ -10,12 +10,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function UploadPage() {
   const router = useRouter();
 
   const [file, setFile] = useState<File | null>(null);
   const [analysing, setAnalysing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleFile = (selectedFile: File | undefined) => {
     if (!selectedFile) return;
@@ -29,25 +31,29 @@ export default function UploadPage() {
     setFile(selectedFile);
   };
 
-  const handleAnalyse = () => {
+  const handleAnalyse = async () => {
     if (!file) return;
 
     setAnalysing(true);
+    setUploadError(null);
 
-    // Save basic file information so the next page can use it
-    localStorage.setItem(
-      "manak_uploaded_file",
-      JSON.stringify({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      })
-    );
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    // Small loading effect
-    setTimeout(() => {
-      router.push("/compliance");
-    }, 700);
+      const result = await apiRequest<Record<string, unknown>>(
+        "/documents/upload",
+        { method: "POST", body: formData }
+      );
+
+      localStorage.setItem("manak_uploaded_file", JSON.stringify(result));
+      router.push("/recommendations");
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Upload failed. Please try again."
+      );
+      setAnalysing(false);
+    }
   };
 
   return (
@@ -326,21 +332,27 @@ export default function UploadPage() {
 
           {/* Analyse button */}
 
-          <button
-            type="button"
-            disabled={!file || analysing}
-            onClick={handleAnalyse}
-            className={`flex items-center gap-3 rounded-full px-7 py-3.5 text-sm font-medium transition ${
-              file && !analysing
-                ? "bg-[#74478A] text-white shadow-lg shadow-[#74478A]/20 hover:bg-[#633B77] hover:-translate-y-0.5"
-                : "cursor-not-allowed bg-[#E7DED9] text-[#A3989D]"
-            }`}
-          >
+          <div className="flex flex-col items-end gap-2">
+            {uploadError && (
+              <p role="alert" className="max-w-sm text-right text-sm text-red-700">
+                {uploadError}
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={!file || analysing}
+              onClick={handleAnalyse}
+              className={`flex items-center gap-3 rounded-full px-7 py-3.5 text-sm font-medium transition ${
+                file && !analysing
+                  ? "bg-[#74478A] text-white shadow-lg shadow-[#74478A]/20 hover:bg-[#633B77] hover:-translate-y-0.5"
+                  : "cursor-not-allowed bg-[#E7DED9] text-[#A3989D]"
+              }`}
+            >
 
             {analysing ? (
 
               <>
-                Analysing...
+                Uploading...
 
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               </>
@@ -354,7 +366,8 @@ export default function UploadPage() {
 
             )}
 
-          </button>
+            </button>
+          </div>
 
         </div>
 
