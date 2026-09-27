@@ -67,19 +67,19 @@ class EmbeddingModel:
 
     @overload
     def encode(
-        self, texts: str, normalize: bool = True, batch_size: int = 32
+        self, texts: str, normalize: bool = True, batch_size: int = settings.embedding_batch_size
     ) -> list[float]: ...
 
     @overload
     def encode(
-        self, texts: list[str], normalize: bool = True, batch_size: int = 32
+        self, texts: list[str], normalize: bool = True, batch_size: int = settings.embedding_batch_size
     ) -> list[list[float]]: ...
 
     def encode(
         self,
         texts: str | list[str],
         normalize: bool = True,
-        batch_size: int = 32,
+        batch_size: int = settings.embedding_batch_size,
     ) -> list[float] | list[list[float]]:
         """
         Encode text(s) to dense vectors.
@@ -87,7 +87,8 @@ class EmbeddingModel:
         Args:
             texts: Single text or list of texts
             normalize: Whether to L2 normalize vectors (recommended for cosine similarity)
-            batch_size: Batch size for encoding
+            batch_size: Batch size for encoding; defaults to the configured
+                EMBEDDING_BATCH_SIZE.
 
         Returns:
             Single vector if texts is str, otherwise array of vectors
@@ -243,8 +244,8 @@ class EmbeddingPipeline:
 
     @staticmethod
     def _chunk_text(
-        text: str, 
-        chunk_size: int = settings.chunk_size, 
+        text: str,
+        chunk_size: int = settings.chunk_size,
         overlap: int = settings.chunk_overlap
     ) -> list[dict]:
         """Split nonblank text into character chunks with original offsets.
