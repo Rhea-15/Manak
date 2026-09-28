@@ -131,13 +131,15 @@ export default function RecommendationsPage() {
 
   const openCompliance = (recommendation: Recommendation) => {
     if (recommendation.standard_id === null) return;
+    
+    // Split "IS 456 - Plain and..." to safely grab just "IS 456"
+    const parsedStandardNumber = recommendation.ai_suggested_spec.split(" - ")[0].trim();
+    
     localStorage.setItem(
       "manak_selected_standard",
       JSON.stringify({
         standard_id: recommendation.standard_id,
-        standard_number: recommendation.ai_suggested_spec.match(
-          /\bIS\s+\d{1,6}:\d{4}\b/i
-        )?.[0],
+        standard_number: parsedStandardNumber,
         title: recommendation.ai_suggested_spec,
       })
     );
@@ -362,14 +364,19 @@ export default function RecommendationsPage() {
 
             <button
               type="button"
-              onClick={() => router.push("/compliance")}
+              onClick={() => {
+                // Find the first recommendation that has a valid standard ID
+                const firstValid = recommendations.find(r => r.standard_id !== null);
+                if (firstValid) {
+                  openCompliance(firstValid);
+                } else {
+                  router.push("/compliance");
+                }
+              }}
               className="flex shrink-0 items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-medium text-[#74478A] transition hover:bg-[#F8F3F9]"
             >
-
               Check compliance
-
               <ArrowRight size={16} />
-
             </button>
 
           </div>
