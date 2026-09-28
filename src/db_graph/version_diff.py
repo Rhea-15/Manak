@@ -4,6 +4,7 @@ from src.db_graph.models import StandardVersion
 
 
 def compare_versions(db: Session, old_version_id: int, new_version_id: int):
+    """Report changed fields between two versions of the same standard."""
     old_version = (
         db.query(StandardVersion).filter(StandardVersion.id == old_version_id).first()
     )
@@ -42,6 +43,12 @@ def compare_versions(db: Session, old_version_id: int, new_version_id: int):
         differences["document_path"] = {
             "old": old_version.document_path,
             "new": new_version.document_path,
+        }
+
+    if old_version.source_id != new_version.source_id:
+        differences["source_id"] = {
+            "old": old_version.source_id,
+            "new": new_version.source_id,
         }
 
     return {

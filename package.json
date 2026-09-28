@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "recharts": "^3.10.1"
+  }
+}

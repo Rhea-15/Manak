@@ -129,6 +129,10 @@ async def upload_document(
         raise
     except Exception as exc:
         db.rollback()
+<<<<<<< HEAD
+=======
+        logger.exception("Document upload failed for %s", original_name)
+>>>>>>> 240e0e8a30bc687b7b154b536634473b3a5f11e6
         if storage_result:
             try:
                 await run_in_threadpool(delete_file, storage_result["object_name"])

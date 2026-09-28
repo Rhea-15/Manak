@@ -85,8 +85,11 @@ def validate_standard(
     db: Session = Depends(get_db)
 ):
     return validate_standard_status(db, standard_id)
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 240e0e8a30bc687b7b154b536634473b3a5f11e6
 @app.get("/versions/diff/{old_version_id}/{new_version_id}")
 def version_difference(
     old_version_id: int,

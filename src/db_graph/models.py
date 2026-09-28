@@ -32,6 +32,7 @@ class StandardVersion(Base):
 
     id = Column(Integer, primary_key=True)
     standard_id = Column(Integer, ForeignKey("standards.id"), nullable=False)
+    source_id = Column(Integer, ForeignKey("data_sources.id"), nullable=True)
     version_number = Column(String(50), nullable=False)
     effective_date = Column(Date, nullable=True)
     status = Column(String(50), nullable=False)
@@ -183,4 +184,36 @@ class StandardRelationship(Base):
         Index("ix_standard_relationship_source", "source_standard_id"),
         Index("ix_standard_relationship_target", "target_standard_id"),
         Index("ix_standard_relationship_verified", "verified"),
+    )
+class TenderDocument(Base):
+    __tablename__ = "tender_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    document_id = Column(
+        String(36),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    filename = Column(String(255), nullable=False)
+    object_name = Column(String(1000), nullable=False)
+    bucket = Column(String(255), nullable=False)
+
+    content_type = Column(String(255), nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+
+    uploaded_by_role = Column(String(50), nullable=False)
+
+    parse_status = Column(
+        String(50),
+        nullable=False,
+        default="pending",
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
     )
