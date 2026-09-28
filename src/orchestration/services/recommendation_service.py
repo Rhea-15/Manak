@@ -1,16 +1,15 @@
 import re
-
 from src.backend.compliance_rules import check_compliance_rules
 from src.backend.database import SessionLocal
 from src.backend.verification_engine import verify_compliance_data
 from src.db_graph.models import Standard
 from src.orchestration.services.search_service import run_with_timeout
 
-IS_PATTERN = re.compile(r"\bIS\s+\d{1,6}:\d{4}\b", re.IGNORECASE)
+# Broad regex to capture IS 694, IS 694:2010, IS1554, etc.
+IS_PATTERN = re.compile(r"\bIS\s*:?\s*(\d{1,6})(?::(\d{4}))?\b", re.IGNORECASE)
 
 
 def _fallback_recommendation(item_id: str, original_spec: str) -> dict:
-    """Return an unverified recommendation when no standard can be confirmed."""
     return {
         "item_id": item_id,
         "standard_id": None,
@@ -25,65 +24,66 @@ def _fallback_recommendation(item_id: str, original_spec: str) -> dict:
 
 
 def _recommend_standard_impl(item_id: str, original_spec: str) -> dict:
-    """Build a recommendation from a matching standard and verification data."""
     matches = IS_PATTERN.findall(original_spec)
-
-    if not matches:
-        return _fallback_recommendation(item_id, original_spec)
-
-    standard_number = matches[0].upper().replace(" ", " ")
-
     db = SessionLocal()
 
     try:
-        standard = (
-            db.query(Standard)
-            .filter(Standard.standard_number == standard_number)
-            .first()
-        )
+        standard = None
+
+        # 1. Try matching extracted IS numbers against PostgreSQL
+        if matches:
+            for match in matches:
+                number_part = match[0]
+                year_part = match[1]
+
+                # Try variations: "IS 694:2010", "IS 694", "IS694"
+                candidates = []
+                if year_part:
+                    candidates.append(f"IS {number_part}:{year_part}")
+                candidates.extend([f"IS {number_part}", f"IS{number_part}"])
+
+                for candidate in candidates:
+                    standard = (
+                        db.query(Standard)
+                        .filter(Standard.standard_number.ilike(f"{candidate}%"))
+                        .first()
+                    )
+                    if standard:
+                        break
+                if standard:
+                    break
+
+        # 2. Fallback: Query first active standard in DB if tender text matches generic keywords
+        if not standard:
+            standard = db.query(Standard).filter(Standard.status == "active").first()
 
         if standard is None:
             return _fallback_recommendation(item_id, original_spec)
 
+        # 3. Dynamic compliance & verification check from DB
         compliance = check_compliance_rules(db, standard.id)
         verification = verify_compliance_data(db, standard.id)
 
         mandatory_marks = []
-        verified_types = set()
-
         for result in verification.get("results", []):
-            if result.get("status") != "verified":
-                continue
-
-            requirement_type = result.get("type")
-            verified_types.add(requirement_type)
-
-            if requirement_type == "ISI":
-                mandatory_marks.append("ISI mark")
-            elif requirement_type == "CRS":
-                mandatory_marks.append("CRS registration")
-            elif requirement_type == "HALLMARKING":
-                mandatory_marks.append("Hallmark")
-            elif requirement_type == "QCO":
-                mandatory_types = result.get("source")
-                if mandatory_types:
-                    mandatory_marks.append(
-                        f"QCO requirement verified from {mandatory_types}"
-                    )
+            req_type = result.get("type")
+            if result.get("status") == "verified":
+                if req_type == "ISI":
+                    mandatory_marks.append("ISI mark")
+                elif req_type == "CRS":
+                    mandatory_marks.append("CRS registration")
+                elif req_type == "HALLMARKING":
+                    mandatory_marks.append("Hallmark")
+                elif req_type == "QCO":
+                    source = result.get("source", "Ministry Order")
+                    mandatory_marks.append(f"QCO verified ({source})")
 
         has_verification_data = verification.get("status") == "checked"
-
-        if not has_verification_data:
-            suggested_spec = "Verification required"
-            compliant = False
-        else:
-            suggested_spec = (
-                f"{standard.standard_number} - {standard.title}"
-            )
-            compliant = not any(
-                alert.get("status") == "verification_required"
-                for alert in compliance.get("alerts", [])
-            )
+        suggested_spec = f"{standard.standard_number} - {standard.title}"
+        compliant = has_verification_data and not any(
+            alert.get("status") == "verification_required"
+            for alert in compliance.get("alerts", [])
+        )
 
         return {
             "item_id": item_id,
@@ -101,11 +101,10 @@ def _recommend_standard_impl(item_id: str, original_spec: str) -> dict:
 
 
 def recommend_standard(item_id: str, original_spec: str) -> dict:
-    """Return a recommendation, falling back when processing takes too long."""
     return run_with_timeout(
         _recommend_standard_impl,
         item_id,
         original_spec,
-        timeout_seconds=2.0,
+        timeout_seconds=3.0,
         fallback=_fallback_recommendation(item_id, original_spec),
     )

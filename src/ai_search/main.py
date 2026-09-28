@@ -29,6 +29,16 @@ app = FastAPI(
     description="Vector & Lexical Hybrid Search Engine for Indian Standards and BOQ processing",
     version="1.0.0",
 )
+# Add this right after app initialization in src/ai_search/main.py:
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # --- Pydantic Schemas ---
