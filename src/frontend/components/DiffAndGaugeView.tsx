@@ -35,19 +35,35 @@ export default function DiffAndGaugeView({
       </div>
 
       {/* Specification Comparison Diffs */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-[#A35A91] mb-3">
+      <div className="bg-white p-7 rounded-[24px] border border-[#E4DAD5] shadow-sm">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[#A35A91] mb-4">
           Live Specification Diff
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs p-4 bg-slate-900 text-slate-100 rounded-xl overflow-x-auto">
-          <div>
-            <p className="text-amber-400 font-bold mb-2">// Tender Requirement (Extracted)</p>
-            <pre className="whitespace-pre-wrap leading-relaxed text-slate-300">{tenderSpec}</pre>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-[13px]">
+          
+          {/* Left Side: Extracted Tender (Light Purple Theme) */}
+          <div className="p-6 bg-[#FAF4FB] border border-[#E7D6E9] rounded-2xl">
+            <p className="text-[#74478A] font-bold mb-3 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#A35A91]"></span>
+              Tender Requirement (Extracted)
+            </p>
+            <pre className="whitespace-pre-wrap leading-relaxed text-[#4A3B54]">
+              {tenderSpec}
+            </pre>
           </div>
-          <div className="border-t border-slate-700 md:border-t-0 md:border-l md:pl-4 pt-4 md:pt-0">
-            <p className="text-emerald-400 font-bold mb-2">// Verified Indian Standard Specification</p>
-            <pre className="whitespace-pre-wrap leading-relaxed text-emerald-300">{verifiedSpec}</pre>
+
+          {/* Right Side: Verified Standard (Light Green Theme) */}
+          <div className="p-6 bg-[#F3F9F4] border border-[#CEE6D3] rounded-2xl">
+            <p className="text-[#2F6D38] font-bold mb-3 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#52A360]"></span>
+              Verified Indian Standard Specification
+            </p>
+            <pre className="whitespace-pre-wrap leading-relaxed text-[#213B26]">
+              {verifiedSpec}
+            </pre>
           </div>
+
         </div>
       </div>
     </div>

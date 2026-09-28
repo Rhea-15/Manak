@@ -84,10 +84,11 @@ export default function CompliancePage() {
           apiRequest<VerificationData>(`/verification/${id}`),
         ]);
 
-        let graph: { graph?: GraphData } | null = null;
+        let graphRes: any = null;
         try {
           if (selected.standard_number) {
-            graph = await apiRequest<{ graph?: GraphData }>(`/graph/standard/${encodeURIComponent(selected.standard_number)}`);
+            // Accept the direct object structure returned by the curl command
+            graphRes = await apiRequest(`/graph/standard/${encodeURIComponent(selected.standard_number)}`);
           }
         } catch {
           // If no graph entries exist for this standard in Neo4j, default safely
@@ -97,7 +98,12 @@ export default function CompliancePage() {
           setCompliance(comp);
           setQuality(qual);
           setVerification(verif);
-          if (graph?.graph) setGraphData(graph.graph);
+
+          // The backend may return the graph directly or nested under a known envelope.
+          const resolvedGraph = graphRes?.graph ?? graphRes?.data ?? graphRes;
+          if (resolvedGraph && (resolvedGraph.standard_number || resolvedGraph.linked_standards)) {
+            setGraphData(resolvedGraph);
+          }
         }
       } catch (err) {
         if (!cancelled) {

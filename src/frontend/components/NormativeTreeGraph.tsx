@@ -25,10 +25,23 @@ export default function NormativeTreeGraph({ graphData }: { graphData?: GraphDat
     const generatedNodes: Node[] = [
       {
         id: 'root',
-        position: { x: 250, y: 20 },
-        data: { label: `${rootStandard}: ${rootTitle}` },
+        position: { x: 320, y: 30 },
+        data: {
+          label: (
+            <div className="text-center px-2 py-1">
+              <div className="font-bold text-sm text-[#211735]">{rootStandard}</div>
+              <div className="text-xs text-[#74478A] mt-0.5">{rootTitle}</div>
+            </div>
+          ),
+        },
         type: 'input',
-        style: { background: '#EDE0EC', borderColor: '#74478A', fontWeight: 600, color: '#211735' },
+        style: {
+          background: '#EDE0EC',
+          borderColor: '#74478A',
+          borderWidth: 2,
+          borderRadius: 12,
+          minWidth: 220,
+        },
       },
     ];
 
@@ -38,9 +51,9 @@ export default function NormativeTreeGraph({ graphData }: { graphData?: GraphDat
     if (linked.length === 0) {
       generatedNodes.push({
         id: 'no-links',
-        position: { x: 250, y: 150 },
+        position: { x: 320, y: 180 },
         data: { label: 'No allied or normative references linked in Neo4j' },
-        style: { background: '#F8F9FA', borderColor: '#CCC', color: '#666' },
+        style: { background: '#F8F9FA', borderColor: '#CCC', color: '#666', borderRadius: 8 },
       });
       generatedEdges.push({
         id: 'e-root-none',
@@ -49,24 +62,49 @@ export default function NormativeTreeGraph({ graphData }: { graphData?: GraphDat
         animated: true,
       });
     } else {
+      const itemsPerRow = 3;
+      const xSpacing = 260;
+      const ySpacing = 130;
+
       linked.forEach((item, index) => {
         const id = `node-${index}`;
-        const xOffset = 60 + (index % 3) * 220;
-        const yOffset = 140 + Math.floor(index / 3) * 110;
+        const row = Math.floor(index / itemsPerRow);
+        const col = index % itemsPerRow;
+
+        // Center rows nicely beneath root node
+        const xOffset = 60 + col * xSpacing;
+        const yOffset = 180 + row * ySpacing;
+
+        // Use the actual standard title from PostgreSQL/Neo4j
+        const standardTitle = item.title || 'Referenced Standard';
 
         generatedNodes.push({
           id,
           position: { x: xOffset, y: yOffset },
-          data: { label: `${item.standard_number}: ${item.relationship || 'REFERENCED'}` },
-          style: { background: '#FFFFFF', borderColor: '#DCCBCF', color: '#211735' },
+          data: {
+            label: (
+              <div className="text-center px-2 py-1">
+                <div className="font-semibold text-xs text-[#211735]">{item.standard_number}</div>
+                <div className="text-[11px] text-[#554a5c] mt-0.5 line-clamp-2">{standardTitle}</div>
+              </div>
+            ),
+          },
+          style: {
+            background: '#FFFFFF',
+            borderColor: '#DCCBCF',
+            borderWidth: 1.5,
+            borderRadius: 10,
+            width: 220,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+          },
         });
 
         generatedEdges.push({
           id: `e-root-${id}`,
           source: 'root',
           target: id,
-          label: item.relationship,
           animated: true,
+          style: { stroke: '#A35A91', strokeWidth: 1.5 },
         });
       });
     }
@@ -75,9 +113,9 @@ export default function NormativeTreeGraph({ graphData }: { graphData?: GraphDat
   }, [graphData]);
 
   return (
-    <div className="w-full h-[450px] rounded-xl border border-slate-200 bg-white">
+    <div className="w-full h-[480px] rounded-2xl border border-[#E4DAD5] bg-[#FAF7FA]">
       <ReactFlow nodes={nodes} edges={edges} fitView>
-        <Background />
+        <Background gap={18} size={1} color="#DDD2DC" />
         <Controls />
       </ReactFlow>
     </div>
