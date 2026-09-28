@@ -24,6 +24,7 @@ Threshold notes:
 import json
 import logging
 import os
+import threading
 
 from src.backend.audit import create_audit_log
 from src.backend.database import SessionLocal
@@ -45,6 +46,32 @@ def _env_float(key: str, default: float) -> float:
 
 
 CONFIDENCE_THRESHOLD = _env_float("CONFIDENCE_THRESHOLD", 0.62)
+
+# Upper bound on how long a request may wait for ReviewQueue persistence.
+# Postgres being down or hanging must degrade only the audit trail, never
+# the user-facing response time.
+PERSIST_TIMEOUT_SECONDS = _env_float("CONFIDENCE_PERSIST_TIMEOUT", 0.75)
+
+
+def _run_bounded(func, *args) -> bool:
+    """Run func in a daemon thread and wait at most PERSIST_TIMEOUT_SECONDS.
+
+    Returns True if it finished in time. On timeout the thread is left to
+    finish (or fail) in the background and the caller moves on. func must
+    handle its own exceptions; this helper never raises.
+    """
+    thread = threading.Thread(target=func, args=args, daemon=True)
+    thread.start()
+    thread.join(PERSIST_TIMEOUT_SECONDS)
+
+    if thread.is_alive():
+        logger.warning(
+            "confidence gate: ReviewQueue write exceeded %.2fs; continuing without waiting",
+            PERSIST_TIMEOUT_SECONDS,
+        )
+        return False
+
+    return True
 
 
 def _is_valid_score(score) -> bool:
@@ -104,25 +131,29 @@ def flag_low_confidence_search_results(
     search over its own timeout budget or blocking a cache hit.
     Never raises.
     """
-    for result in results:
-        if not result.get("needs_review"):
-            continue
+    def _flag_all() -> None:
+        for result in results:
+            if not result.get("needs_review"):
+                continue
 
-        try:
-            create_review_item(
-                source="search",
-                context={
-                    "query": query,
-                    "standard_number": result.get("standard_number"),
-                    "score": result.get("score"),
-                    "threshold": threshold,
-                },
-            )
-        except Exception:  # noqa: BLE001 -- persistence must never break search
-            logger.exception(
-                "confidence gate: unexpected error flagging standard_number=%s",
-                result.get("standard_number"),
-            )
+            try:
+                create_review_item(
+                    source="search",
+                    context={
+                        "query": query,
+                        "standard_number": result.get("standard_number"),
+                        "score": result.get("score"),
+                        "threshold": threshold,
+                    },
+                )
+            except Exception:  # noqa: BLE001 -- persistence must never break search
+                logger.exception(
+                    "confidence gate: unexpected error flagging standard_number=%s",
+                    result.get("standard_number"),
+                )
+
+    if any(r.get("needs_review") for r in results):
+        _run_bounded(_flag_all)
 
 
 # ---------------------------------------------------------------------------
@@ -156,21 +187,24 @@ def flag_low_confidence_recommendation(result: dict) -> None:
     if not result.get("needs_review"):
         return
 
-    try:
-        create_review_item(
-            source="recommendation",
-            context={
-                "item_id": result.get("item_id"),
-                "standard_id": result.get("standard_id"),
-                "status": result.get("status"),
-                "compliant": result.get("compliant"),
-            },
-        )
-    except Exception:  # noqa: BLE001 -- persistence must never break recommendation
-        logger.exception(
-            "confidence gate: unexpected error flagging item_id=%s",
-            result.get("item_id"),
-        )
+    def _flag() -> None:
+        try:
+            create_review_item(
+                source="recommendation",
+                context={
+                    "item_id": result.get("item_id"),
+                    "standard_id": result.get("standard_id"),
+                    "status": result.get("status"),
+                    "compliant": result.get("compliant"),
+                },
+            )
+        except Exception:  # noqa: BLE001 -- persistence must never break recommendation
+            logger.exception(
+                "confidence gate: unexpected error flagging item_id=%s",
+                result.get("item_id"),
+            )
+
+    _run_bounded(_flag)
 
 
 # ---------------------------------------------------------------------------

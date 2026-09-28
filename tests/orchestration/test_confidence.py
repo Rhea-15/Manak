@@ -1,5 +1,6 @@
 import json
 from unittest.mock import patch
+import time
 
 import pytest
 from sqlalchemy import create_engine
@@ -191,3 +192,10 @@ def test_env_float_raises_on_malformed_value(monkeypatch):
     monkeypatch.setenv("CONFIDENCE_THRESHOLD", "not-a-float")
     with pytest.raises(ValueError):
         confidence._env_float("CONFIDENCE_THRESHOLD", 0.62)
+
+def test_flag_recommendation_does_not_block_when_persistence_hangs(monkeypatch):
+    monkeypatch.setattr(confidence, "PERSIST_TIMEOUT_SECONDS", 0.05)
+    with patch.object(confidence, "create_review_item", side_effect=lambda **k: time.sleep(2)):
+        start = time.perf_counter()
+        confidence.flag_low_confidence_recommendation({"item_id": "x", "needs_review": True})
+    assert time.perf_counter() - start < 0.5
