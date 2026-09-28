@@ -1,0 +1,20 @@
+{
+  "title": "Supply and Installation of Smart Energy Meters",
+  "definition": "Procurement and implementation of high-precision electronic smart meters for residential and commercial power distribution units.",
+  "year": "2024",
+  "standard_number": "IS 16444:2015",
+  "category": "Electrical & Electronics",
+  "requirements": [
+    {
+      "clause": "4.1",
+      "description": "The smart meter must support dual-way communication protocols including RF mesh and Cellular (4G/LTE).",
+      "mandatory": true
+    },
+    {
+      "clause": "5.2",
+      "description": "Enclosure protection rating must meet or exceed IP55 as per IS/IEC 60529 standard.",
+      "mandatory": true
+    }
+  ],
+  "isi_mark": "IS 16444 Part 1"
+}

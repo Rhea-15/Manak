@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: manak_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: manak
+      POSTGRES_USER: manak
+      POSTGRES_PASSWORD: manak_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  neo4j:
+    image: neo4j:5
+    container_name: manak_neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/manak_password
+    volumes:
+      - neo4j_data:/data
+
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: manak_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: manak
+      MINIO_ROOT_PASSWORD: manak_password
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: manak_qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  redis:
+    image: redis:7-alpine
+    container_name: manak_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  minio_data:
+  qdrant_data:
+  redis_data:
