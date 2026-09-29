@@ -209,7 +209,7 @@ export default function Home() {
               Operations
             </Link>
             <p className="text-xs text-[#817783]">
-              Built for transparent, compliant procurement · MANAK v1.0
+              Built for transparent, compliant procurement
             </p>
           </div>
 
