@@ -77,14 +77,15 @@ Before running the system, configure the following environment variables:
 
 ## 💻 Local Development Setup
 
-To run the application locally for active development:
+To run the application locally across terminals:
 
-**1. Start Data Infrastructure:**
+### Step 1: Start Docker Infrastructure Containers
 ```bash
 docker-compose up -d postgres neo4j minio qdrant redis
 ```
 
-**2. Initialize Databases & Seed Data:**
+### Step 2: Initialize Databases & Seed Data
+Run from the root directory inside your Python virtual environment:
 ```bash
 python -m src.backend.db_init
 python src/db_graph/seed_relations.py
@@ -92,18 +93,24 @@ python src/db_graph/bulk_seed.py
 python -m src.ai_search.seed_pipeline
 ```
 
-**3. Start Backend Services:**
-```bash
-uvicorn src.orchestration.main:app --host 0.0.0.0 --port 8000 --reload
-```
+### Step 3: Start Services Across Terminals
 
-**4. Start Frontend:**
-```bash
-cd src/frontend
-npm install
-npm run dev
-```
+* **Terminal 1: AI Search Microservice (Port 8001)**
+  ```bash
+  uvicorn src.ai_search.main:app --host 0.0.0.0 --port 8001 --reload
+  ```
+  
+* **Terminal 2: Core Orchestration Gateway (Port 8000)**
+  ```bash
+  uvicorn src.orchestration.main:app --host 0.0.0.0 --port 8000 --reload
+  ```
 
+* **Terminal 3: Next.js Frontend (Port 3000)**
+  ```bash
+  cd src/frontend
+  npm install
+  npm run dev
+  ```
 ---
 
 ## 🌐 Production Deployment Guide
